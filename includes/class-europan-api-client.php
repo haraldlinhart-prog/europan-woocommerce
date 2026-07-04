@@ -76,7 +76,13 @@ class Europan_API_Client {
             return array('ok' => false, 'error' => $err, 'status' => $status ?: 502);
         }
 
-        $balance = isset($body['balances']['europan']) ? (float) $body['balances']['europan'] : 0.0;
+        // WICHTIG: Da check_balance() immer coin_id mitschickt, antwortet
+        // /api/v1/balance-by-email mit einem FLACHEN 'balance'-Feld
+        // ({coin_id, balance}), NICHT mit dem verschachtelten 'balances'-Objekt
+        // (letzteres kommt nur zurück, wenn coin_id NICHT mitgeschickt wird).
+        // Vorherige Version las fälschlich $body['balances']['europan'], was bei
+        // jeder Anfrage still auf 0 zurückfiel, egal wie hoch das echte Guthaben war.
+        $balance = isset($body['balance']) ? (float) $body['balance'] : 0.0;
 
         return array(
             'ok'      => true,
