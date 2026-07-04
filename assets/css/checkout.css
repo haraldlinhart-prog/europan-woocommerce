@@ -1,0 +1,79 @@
+/* EUROPAN design tokens — identisch zum Referenz-Widget (README.md, "heller pan-office-Stil") */
+.europan-wc-panel {
+    --ep-navy: #1A2F5A;
+    --ep-gold: #C9963A;
+    --ep-cream: #F7F3ED;
+    --ep-green: #0D5C33;
+    --ep-lgray: #E3DED4;
+    --ep-gray: #6B6B6B;
+    margin-top: 0.75rem;
+}
+
+.europan-wc-badge {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    background: var(--ep-cream);
+    border: 1px solid var(--ep-lgray);
+    border-radius: 6px;
+    padding: 0.5rem 0.7rem;
+    margin-bottom: 0.6rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--ep-navy);
+}
+
+.europan-wc-light {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 100px;
+    font-size: 0.72rem;
+    white-space: nowrap;
+}
+.europan-wc-light--ready { background: #e5f6ec; color: #1b7a3d; }
+.europan-wc-light--ok    { background: #e5f6ec; color: #1b7a3d; }
+.europan-wc-light--fail  { background: #fde8e8; color: #c0392b; }
+
+.europan-wc-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.europan-wc-hint {
+    font-size: 0.8rem;
+    color: var(--ep-gray);
+    line-height: 1.55;
+    margin: 0 0 0.6rem;
+}
+.europan-wc-hint--small { font-size: 0.74rem; margin-top: -0.3rem; }
+
+.europan-wc-form-row {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+.europan-wc-form-row input[type="email"] {
+    flex: 1;
+    min-width: 150px;
+}
+.europan-wc-form-row input[type="password"] {
+    width: 80px;
+    text-align: center;
+}
+
+.europan-wc-result {
+    font-size: 0.82rem;
+    margin: 0.5rem 0 0.75rem;
+    line-height: 1.5;
+}
+.europan-wc-result--ok    { color: var(--ep-green); }
+.europan-wc-result--error { color: #c0392b; }
