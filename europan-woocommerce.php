@@ -3,7 +3,7 @@
  * Plugin Name: EUROPAN für WooCommerce
  * Plugin URI: https://europan.group
  * Description: EUROPAN-Prepaid-Guthaben als eigene Zahlungsart in WooCommerce. Kunde zahlt den vollen Rechnungsbetrag mit zuvor auf europan.group gekauftem EUROPAN-Guthaben (E-Mail + PIN, alles-oder-nichts). Partner erhält Gutschrift abzüglich konfigurierbarer Netzwerk-Kommission (Modell 2: geschlossener Kreislauf, keine Auszahlung in Euro).
- * Version: 0.1.0
+ * Version: 0.2.0
  * Author: PAN21.COM Corporate Consultants Ltd
  * Text Domain: europan-woocommerce
  * Requires Plugins: woocommerce
@@ -19,7 +19,7 @@
 
 if (!defined('ABSPATH')) exit;
 
-define('EUROPAN_WC_VERSION', '0.1.0');
+define('EUROPAN_WC_VERSION', '0.2.0');
 define('EUROPAN_WC_PLUGIN_FILE', __FILE__);
 define('EUROPAN_WC_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('EUROPAN_WC_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -50,6 +50,17 @@ function europan_wc_init() {
         $gateways[] = 'WC_Gateway_Europan';
         return $gateways;
     });
+
+    // Block-Checkout-Registrierung, separat vom klassischen Gateway-Filter oben.
+    // Ohne dies erscheint EUROPAN nicht im neuen Block-basierten Checkout
+    // (WooCommerce Blocks nutzt eine eigene Payment-Method-Registry).
+    if (class_exists('\Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType')) {
+        require_once EUROPAN_WC_PLUGIN_DIR . 'includes/class-europan-blocks-support.php';
+
+        add_action('woocommerce_blocks_payment_method_type_registration', function ($payment_method_registry) {
+            $payment_method_registry->register(new Europan_Blocks_Support());
+        });
+    }
 }
 // Priority 11: run after WooCommerce's own 'plugins_loaded' registration (prio 10 default),
 // so class_exists('WooCommerce') is reliable regardless of plugin load order.
