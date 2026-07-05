@@ -18,7 +18,13 @@ class Europan_WC_Ajax {
         check_ajax_referer('europan_wc_nonce', 'nonce');
 
         $email = isset($_POST['email']) ? sanitize_email(wp_unslash($_POST['email'])) : '';
-        $pin   = isset($_POST['pin']) ? preg_replace('/\D/', '', wp_unslash($_POST['pin'])) : '';
+        // preg_replace() alone strips non-digits correctly, but WordPress Plugin
+        // Check's static analysis specifically looks for a recognized sanitize_*
+        // call on user input — wrapping the result in sanitize_text_field() is
+        // functionally redundant here (preg_replace already leaves only digits)
+        // but satisfies that check explicitly rather than relying on an
+        // equivalent-but-unrecognized approach.
+        $pin = isset($_POST['pin']) ? sanitize_text_field(preg_replace('/\D/', '', wp_unslash($_POST['pin']))) : '';
 
         if (!is_email($email)) {
             wp_send_json_error(array('message' => 'Bitte eine gültige E-Mail-Adresse angeben.'), 400);

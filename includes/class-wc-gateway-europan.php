@@ -161,7 +161,7 @@ class WC_Gateway_Europan extends WC_Payment_Gateway {
             </p>
 
             <?php if ($bonus_html): ?>
-                <div class="europan-wc-bonus-hint"><?php echo $bonus_html; ?></div>
+                <div class="europan-wc-bonus-hint"><?php echo wp_kses_post($bonus_html); ?></div>
             <?php endif; ?>
 
             <div class="europan-wc-form-row">
