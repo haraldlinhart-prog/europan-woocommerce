@@ -145,8 +145,21 @@ class Europan_WC_Settlement {
         $order->update_meta_data('_europan_wc_new_balance', $debit['new_balance']);
         $order->add_order_note(sprintf('EUROPAN-Guthaben belastet: %s (Ref: %s). Neues Guthaben: %s.', wc_price($amount), $reference, $debit['new_balance']));
 
-        // Partner-Gutschrift, Modell 2 (geschlossener Kreislauf, keine Euro-Auszahlung) —
-        // Kommissionssatz kommt aus den Gateway-Settings des jeweiligen Shops.
+        // Partner-Gutschrift — Kommissionssatz kommt aus den Gateway-Settings des jeweiligen Shops.
+        //
+        // WICHTIG (Stand Juli 2026, siehe Gespräch mit Harald): Das ZIELMODELL für dieses
+        // Plugin ist inzwischen eine ECHTE Euro-Auszahlung an das Bankkonto des Shops
+        // (finanziert aus dem Gutschein-Vorverkauf auf europan.group/buy — EUROPAN hält
+        // das Geld als Float und zahlt bei Einlösung abzüglich Provision aus), NICHT mehr
+        // der ursprünglich hier dokumentierte "geschlossene EP-Kreislauf ohne Auszahlung".
+        // ABER: Europan_API_Client::credit_partner() ruft weiterhin /api/v1/partner-credit
+        // auf, einen reinen EP-Gutschrift-Endpunkt — es gibt aktuell KEINEN Backend-Endpunkt
+        // für eine echte Bankauszahlung, keine Bankdaten-Erfassung in den Gateway-Settings,
+        // keine Auszahlungs-/Reconciliation-Logik. Diese Zeile hier tut also weiterhin genau
+        // das, was der alte Kommentar beschrieb (EP-Gutschrift), auch wenn das nicht mehr
+        // das erklärte Zielmodell ist. Das ist ein eigenständiges, größeres Backend-Projekt
+        // (Bankverbindung erfassen, Auszahlungs-Endpunkt, Float-Buchhaltung), keine reine
+        // Code-Anpassung hier — nicht stillschweigend als "erledigt" behandeln.
         $gateway_settings = get_option('woocommerce_europan_settings', array());
         $partner_email    = !empty($gateway_settings['partner_email']) ? $gateway_settings['partner_email'] : '';
         $commission_pct   = isset($gateway_settings['commission_pct']) ? (float) $gateway_settings['commission_pct'] : (float) get_option('europan_wc_commission_pct', 3.0);
@@ -163,7 +176,7 @@ class Europan_WC_Settlement {
             );
             if ($credit['ok']) {
                 $order->update_meta_data('_europan_wc_partner_net', $credit['net_amount']);
-                $order->add_order_note(sprintf('Partner-Gutschrift erteilt: %s EP (Brutto %s, Kommission %.1f%%).', $credit['net_amount'], wc_price($amount), $commission_pct));
+                $order->add_order_note(sprintf('Partner-Gutschrift erteilt: %s EP (Brutto %s, Kommission %.1f%%). Hinweis: aktuell EP-Gutschrift, echte Bankauszahlung ist Zielmodell, aber noch nicht gebaut.', $credit['net_amount'], wc_price($amount), $commission_pct));
             } else {
                 $order->add_order_note('⚠️ Partner-Gutschrift fehlgeschlagen: ' . $credit['error'] . ' — Kunde wurde bereits belastet, manuelle Nachbuchung erforderlich.');
             }

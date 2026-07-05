@@ -80,7 +80,7 @@ class WC_Gateway_Europan extends WC_Payment_Gateway {
             'commission_pct' => array(
                 'title'       => 'Netzwerk-Kommission (%)',
                 'type'        => 'number',
-                'description' => 'Wird von jeder EUROPAN-Zahlung einbehalten, bevor Ihnen die Gutschrift erteilt wird (Modell 2: geschlossener EP-Kreislauf, keine Euro-Auszahlung). Empfohlener Bereich: 2–5%.',
+                'description' => 'Wird von jeder EUROPAN-Zahlung einbehalten, bevor Ihnen die Gutschrift erteilt wird. Empfohlener Bereich: 2–5%. HINWEIS (Stand Juli 2026): Aktuell erfolgt die Gutschrift als EP-Guthaben (kein Bankauszahlungs-Mechanismus im Backend implementiert) — eine echte Euro-Auszahlung an Ihr Bankkonto ist als Zielmodell vorgesehen, aber noch nicht gebaut. Bitte vor kommerziellem Einsatz mit PAN21 abklären.',
                 'default'     => get_option('europan_wc_commission_pct', 3.0),
                 'custom_attributes' => array('step' => '0.1', 'min' => '0', 'max' => '10'),
                 'desc_tip'    => true,

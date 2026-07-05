@@ -212,9 +212,22 @@ class Europan_API_Client {
     }
 
     /**
-     * Credit the partner with (order amount − network commission) — Modell 2 (geschlossener
-     * Kreislauf): kein Cash-out, der Partner bekommt EP-Guthaben, keine Euro-Auszahlung.
-     * Kommissionssatz kommt aus den Gateway-Settings (Default 3%, siehe Plugin-Bootstrap).
+     * Credit the partner with (order amount − network commission) via noble-limited's
+     * EP-credit endpoint.
+     *
+     * WICHTIG (Stand Juli 2026): Das erklärte Zielmodell für dieses Plugin ist inzwischen
+     * eine ECHTE Euro-Auszahlung an das Bankkonto des Shops (finanziert aus dem
+     * Gutschein-Vorverkauf auf europan.group/buy, EUROPAN als Float-Halter, Auszahlung
+     * abzüglich Provision bei Einlösung) — NICHT mehr der ursprünglich hier dokumentierte
+     * geschlossene EP-Kreislauf ohne Auszahlung. Diese Methode wurde dafür aber noch NICHT
+     * umgebaut: sie ruft weiterhin /api/v1/partner-credit auf, einen reinen
+     * EP-Gutschrift-Endpunkt. Eine echte Bankauszahlung würde einen komplett anderen
+     * Backend-Endpunkt, eine Bankverbindungs-Erfassung in den Gateway-Settings und eine
+     * Float-/Auszahlungs-Buchhaltung erfordern — keins davon existiert aktuell. Der
+     * payout_model-Wert unten ('closed_loop_ep') spiegelt bewusst weiterhin exakt das
+     * wider, was diese Methode tatsächlich tut, nicht das Zielmodell — ihn ohne den
+     * dazugehörigen Backend-Umbau zu ändern würde der noble-limited-API eine Auszahlungsart
+     * vortäuschen, die serverseitig gar nicht existiert.
      *
      * @return array { ok: bool, error?: string }
      */
@@ -238,7 +251,7 @@ class Europan_API_Client {
                 'gross_amount'    => $gross_amount,
                 'commission_pct'  => $commission_pct,
                 'net_amount'      => $net_amount,
-                'payout_model'    => 'closed_loop_ep', // Modell 2 — siehe class-europan-settlement.php
+                'payout_model'    => 'closed_loop_ep', // Absichtlich unverändert, siehe Klassen-/Methoden-Kommentar oben — spiegelt den TATSÄCHLICHEN Endpunkt, nicht das Zielmodell.
                 'description'     => $description,
                 'reference'       => $reference,
             )),

@@ -4,7 +4,7 @@ Tags: woocommerce, payment gateway, prepaid, ecommerce, currency
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.5.0
+Stable tag: 0.5.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -12,9 +12,8 @@ Accept EUROPAN prepaid balance as a standalone WooCommerce payment method, with 
 
 == Description ==
 
-This plugin adds **EUROPAN** — the closed-loop network currency operated by
-Noble Private Capital Ltd (europan.group) — as its own payment method inside
-WooCommerce.
+This plugin adds **EUROPAN** — the network currency operated by Noble Private
+Capital Ltd (europan.group) — as its own payment method inside WooCommerce.
 
 **How it works for the customer:**
 
@@ -37,7 +36,9 @@ step is needed, the customer simply owes less.
 
 * Full-amount debit only, verified via email + PIN — no partial charges.
 * Configurable network commission withheld before the shop's own EUROPAN
-  balance is credited (closed-loop model, no cash payout).
+  credit is issued. Note: as of this version, this is an EP credit, not yet a
+  real bank payout — a genuine Euro payout to the shop's bank account is the
+  intended future model but is not yet implemented on the backend.
 * Order notes record every balance debit, partner credit, and any failures
   that require manual follow-up.
 * Refunds and cancellations automatically credit the customer's EUROPAN
@@ -101,6 +102,16 @@ service: https://europan.group/datenschutz
    bonus notice.
 
 == Changelog ==
+
+= 0.5.1 =
+* Documentation correction only, no functional change: removed outdated
+  "closed-loop, no cash payout" claims from code comments, settings text and
+  this readme. The intended model for partner settlement is now a real Euro
+  bank payout (funded from EUROPAN's voucher pre-sale float), but this is not
+  yet implemented on the backend — the plugin still issues an EP credit to
+  the shop's own EUROPAN balance, exactly as before. This version only makes
+  the documentation honest about that gap; nothing about the actual payout
+  behaviour changed.
 
 = 0.5.0 =
 * The EUROPAN API key is now entered directly in the gateway's own settings
