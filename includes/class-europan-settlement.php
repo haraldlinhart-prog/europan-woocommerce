@@ -162,7 +162,7 @@ class Europan_WC_Settlement {
         // Code-Anpassung hier — nicht stillschweigend als "erledigt" behandeln.
         $gateway_settings = get_option('woocommerce_europan_settings', array());
         $partner_email    = !empty($gateway_settings['partner_email']) ? $gateway_settings['partner_email'] : '';
-        $commission_pct   = isset($gateway_settings['commission_pct']) ? (float) $gateway_settings['commission_pct'] : (float) get_option('europan_wc_commission_pct', 3.0);
+        $commission_pct   = isset($gateway_settings['commission_pct']) && $gateway_settings['commission_pct'] !== '' ? (float) $gateway_settings['commission_pct'] : 0.0;
 
         if (empty($partner_email)) {
             $order->add_order_note('⚠️ Keine Partner-E-Mail in den EUROPAN-Zahlungseinstellungen hinterlegt — Partner-Gutschrift übersprungen. Bitte in WooCommerce → Zahlungen → EUROPAN eintragen.');

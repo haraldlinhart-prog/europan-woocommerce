@@ -80,9 +80,9 @@ class WC_Gateway_Europan extends WC_Payment_Gateway {
             'commission_pct' => array(
                 'title'       => 'Netzwerk-Kommission (%)',
                 'type'        => 'number',
-                'description' => 'Wird von jeder EUROPAN-Zahlung einbehalten, bevor Ihnen die Gutschrift erteilt wird. Empfohlener Bereich: 2–5%. Die Gutschrift erfolgt als EP-Guthaben auf Ihr Partnerkonto; die Auszahlung an Ihr Bankkonto erfolgt in unregelmäßigen Abständen (aktuell manuell, kein automatisierter Auszahlungslauf). Ihre Bankverbindung dafür geben Sie bei der Partner-Registrierung auf europan.direct an — NICHT hier, diese Einstellungsseite übermittelt keine Bankdaten an EUROPAN.',
-                'default'     => get_option('europan_wc_commission_pct', 3.0),
-                'custom_attributes' => array('step' => '0.1', 'min' => '0', 'max' => '10'),
+                'description' => 'Wird von jeder EUROPAN-Zahlung einbehalten, bevor Ihnen die Gutschrift erteilt wird. Die Höhe wird individuell mit PAN21/EUROPAN vereinbart (siehe Ihre Vereinbarung/Abrechnung) — tragen Sie hier genau den mit Ihnen vereinbarten Wert ein. Die Gutschrift erfolgt als EP-Guthaben auf Ihr Partnerkonto; die Auszahlung an Ihr Bankkonto erfolgt in unregelmäßigen Abständen (aktuell manuell, kein automatisierter Auszahlungslauf). Ihre Bankverbindung dafür geben Sie bei der Partner-Registrierung auf europan.direct an — NICHT hier, diese Einstellungsseite übermittelt keine Bankdaten an EUROPAN.',
+                'default'     => '',
+                'custom_attributes' => array('step' => '0.01', 'min' => '0', 'max' => '100'),
                 'desc_tip'    => true,
             ),
             'bonus_title' => array(
@@ -239,14 +239,13 @@ class WC_Gateway_Europan extends WC_Payment_Gateway {
      * trusts anything the client claims about balance sufficiency.
      */
     public function validate_fields() {
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- WooCommerce
-        // itself already verifies the 'woocommerce-process_checkout' nonce inside
-        // WC_Checkout::process_checkout() BEFORE it ever calls any gateway's
-        // validate_fields(). Adding a second, redundant nonce check here would not
-        // add any real protection — this reads a value from that same
-        // already-nonce-verified POST request, it's just that Plugin Check's static
-        // analysis can't see the nonce check that happens in the calling function.
-        $token = isset($_POST['europan_wc_verified_token']) ? sanitize_text_field(wp_unslash($_POST['europan_wc_verified_token'])) : '';
+        // WooCommerce itself already verifies the 'woocommerce-process_checkout' nonce
+        // inside WC_Checkout::process_checkout() BEFORE it ever calls any gateway's
+        // validate_fields(). Adding a second, redundant nonce check here would not add
+        // any real protection — this reads a value from that same already-nonce-verified
+        // POST request; Plugin Check's static analysis just can't see the nonce check
+        // that happens in the calling function, hence the inline ignore below.
+        $token = isset($_POST['europan_wc_verified_token']) ? sanitize_text_field(wp_unslash($_POST['europan_wc_verified_token'])) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 
         if (empty($token) || !WC()->session) {
             wc_add_notice('Bitte zuerst Ihr EUROPAN-Guthaben prüfen (E-Mail + PIN).', 'error');

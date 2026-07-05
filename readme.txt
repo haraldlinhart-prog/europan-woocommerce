@@ -4,7 +4,7 @@ Tags: woocommerce, payment gateway, prepaid, ecommerce, currency
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.5.2
+Stable tag: 0.5.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -102,6 +102,17 @@ service: https://europan.group/datenschutz
    bonus notice.
 
 == Changelog ==
+
+= 0.5.3 =
+* Fixed a Plugin Check nonce-verification warning by moving the phpcs:ignore
+  annotation onto the exact flagged line (it previously sat on a separate
+  comment line above, where it had no effect).
+* Removed every suggested/default commission percentage from the plugin
+  (activation-time default, settings field default, "recommended range"
+  text, input max cap). The network commission is a per-partner business
+  agreement, not something this plugin should hint at or assume — shop
+  owners enter exactly the rate agreed with PAN21/EUROPAN, and an unset
+  rate is treated as 0%, never a guessed number.
 
 = 0.5.2 =
 * Clarified that payouts to shop owners are currently handled manually
