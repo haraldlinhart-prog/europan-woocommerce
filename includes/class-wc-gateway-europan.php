@@ -48,7 +48,7 @@ class WC_Gateway_Europan extends WC_Payment_Gateway {
             'account_title' => array(
                 'title'       => 'EUROPAN-Partnerkonto',
                 'type'        => 'title',
-                'description' => 'Um EUROPAN als Zahlungsart anzubieten, benötigen Sie einen persönlichen API-Key für Ihr EUROPAN-Partnerkonto. Ein Selbstbedienungs-Dashboard dafür gibt es aktuell noch nicht — bitte wenden Sie sich für die Einrichtung Ihres Partnerkontos und Ihres API-Keys an den EUROPAN-Support. Tragen Sie Ihren API-Key und Ihre Partner-E-Mail-Adresse anschließend unten ein.',
+                'description' => 'Um EUROPAN als Zahlungsart anzubieten, benötigen Sie einen persönlichen API-Key für Ihr EUROPAN-Partnerkonto. Registrieren Sie sich dafür unter <a href="https://www.europan.direct/partners.html" target="_blank" rel="noopener">europan.direct/partners.html</a> — beim kostenlosen "Free"-Tier erhalten Sie den API-Key sofort, ohne Wartezeit. Ihre Partner-E-Mail-Adresse und die Kommission, die EUROPAN einbehält, werden dabei automatisch mit Ihrem Konto verknüpft — Sie müssen (und können) sie hier nicht separat eintragen.',
             ),
             'api_key' => array(
                 'title'       => 'API-Key',
@@ -69,21 +69,6 @@ class WC_Gateway_Europan extends WC_Payment_Gateway {
                 'type'        => 'textarea',
                 'description' => 'Kurzer Erklärtext unter dem Zahlungsart-Titel im Checkout.',
                 'default'     => 'Bezahlen Sie mit Ihrem EUROPAN-Guthaben. Sie benötigen die E-Mail-Adresse und PIN aus Ihrer EUROPAN-Bestellbestätigung.',
-            ),
-            'partner_email' => array(
-                'title'       => 'Partner-E-Mail (EUROPAN-Konto)',
-                'type'        => 'email',
-                'description' => 'Die E-Mail-Adresse, unter der IHR EUROPAN-Partnerkonto geführt wird (dieselbe wie bei der Registrierung auf europan.direct). Hierhin fließt die Gutschrift abzüglich Kommission. EMPFEHLUNG: Verwenden Sie eine E-Mail-Adresse, die AUSSCHLIESSLICH für dieses Partnerkonto genutzt wird — nie zum eigenen privaten Einkaufen mit EUROPAN. Sonst vermischt sich Ihre verdiente Kommission mit eigenem Guthaben im selben Kontostand, und der Betrag ist am Abrechnungstag nicht mehr eindeutig als "das schuldet mir EUROPAN" erkennbar.',
-                'default'     => '',
-                'desc_tip'    => true,
-            ),
-            'commission_pct' => array(
-                'title'       => 'Netzwerk-Kommission (%)',
-                'type'        => 'number',
-                'description' => 'Wird von jeder EUROPAN-Zahlung einbehalten, bevor Ihnen die Gutschrift erteilt wird. Die Höhe wird individuell mit PAN21/EUROPAN vereinbart (siehe Ihre Vereinbarung/Abrechnung) — tragen Sie hier genau den mit Ihnen vereinbarten Wert ein. Die Gutschrift erfolgt als EP-Guthaben auf Ihr Partnerkonto; die Auszahlung an Ihr Bankkonto erfolgt in unregelmäßigen Abständen (aktuell manuell, kein automatisierter Auszahlungslauf). Ihre Bankverbindung dafür geben Sie bei der Partner-Registrierung auf europan.direct an — NICHT hier, diese Einstellungsseite übermittelt keine Bankdaten an EUROPAN.',
-                'default'     => '',
-                'custom_attributes' => array('step' => '0.01', 'min' => '0', 'max' => '100'),
-                'desc_tip'    => true,
             ),
             'bonus_title' => array(
                 'title'       => 'Kundenbonus',
@@ -233,44 +218,23 @@ class WC_Gateway_Europan extends WC_Payment_Gateway {
     }
 
     /**
-     * Server-side gate: WooCommerce calls this right before process_payment() when
-     * the customer clicks "Bestellung aufgeben". Rejects the order attempt outright
-     * if there is no valid, fresh (15 min) server-side verification token — never
-     * trusts anything the client claims about balance sufficiency.
+     * Lightweight presence check only. The real enforcement — is the token valid, not
+     * expired, not already used, and does the balance actually cover this amount —
+     * now happens server-side on europan.direct inside settle() (see
+     * Europan_API_Client::settle()), because that's also where the actual debit
+     * happens. Duplicating that logic here would just be a second copy that could
+     * drift out of sync with the one that actually moves money.
      */
     public function validate_fields() {
-        // WooCommerce itself already verifies the 'woocommerce-process_checkout' nonce
-        // inside WC_Checkout::process_checkout() BEFORE it ever calls any gateway's
-        // validate_fields(). Adding a second, redundant nonce check here would not add
-        // any real protection — this reads a value from that same already-nonce-verified
-        // POST request; Plugin Check's static analysis just can't see the nonce check
-        // that happens in the calling function, hence the inline ignore below.
-        $token = isset($_POST['europan_wc_verified_token']) ? sanitize_text_field(wp_unslash($_POST['europan_wc_verified_token'])) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- WooCommerce
+        // itself already verifies the 'woocommerce-process_checkout' nonce inside
+        // WC_Checkout::process_checkout() BEFORE it ever calls any gateway's
+        // validate_fields(); this reads a value from that same already-verified POST.
+        $token = isset($_POST['europan_wc_verified_token']) ? sanitize_text_field(wp_unslash($_POST['europan_wc_verified_token'])) : '';
+        $verified_email = WC()->session ? WC()->session->get('europan_wc_verified_email') : '';
 
-        if (empty($token) || !WC()->session) {
+        if (empty($token) || empty($verified_email)) {
             wc_add_notice('Bitte zuerst Ihr EUROPAN-Guthaben prüfen (E-Mail + PIN).', 'error');
-            return false;
-        }
-
-        $session_token   = WC()->session->get('europan_wc_verified_token');
-        $verified_at     = (int) WC()->session->get('europan_wc_verified_at', 0);
-        $verified_email  = WC()->session->get('europan_wc_verified_email');
-        $verified_balance = (float) WC()->session->get('europan_wc_verified_balance', 0);
-
-        if (empty($session_token) || !hash_equals($session_token, $token)) {
-            wc_add_notice('EUROPAN-Verifikation ungültig oder abgelaufen. Bitte Guthaben erneut prüfen.', 'error');
-            return false;
-        }
-        if ((time() - $verified_at) > 15 * MINUTE_IN_SECONDS) {
-            wc_add_notice('Die EUROPAN-Verifikation ist abgelaufen (15 Minuten). Bitte Guthaben erneut prüfen.', 'error');
-            return false;
-        }
-
-        $cart_total = (float) WC()->cart->get_total('edit');
-        if ($verified_balance < $cart_total) {
-            // Re-check against the CURRENT cart total, not the total at verification time —
-            // the cart can change (coupon, shipping) between check and submit.
-            wc_add_notice('Ihr EUROPAN-Guthaben reicht nicht für den aktuellen Gesamtbetrag. Bitte erneut prüfen.', 'error');
             return false;
         }
 
@@ -278,40 +242,58 @@ class WC_Gateway_Europan extends WC_Payment_Gateway {
     }
 
     /**
-     * Places the order as "on-hold" — deliberately NOT paid yet. The actual debit of
-     * the customer's EUROPAN balance and the partner credit both happen in
-     * Europan_WC_Settlement::handle_payment_complete(), which only fires once
-     * WooCommerce independently confirms payment via woocommerce_payment_complete.
-     * This mirrors the existing settleEuropan() rule: never touch balances at
-     * checkout-creation time, only after confirmed payment.
+     * Charges the order synchronously via Europan_API_Client::settle() — which debits
+     * the customer and credits the shop (net of a commission looked up server-side on
+     * europan.direct) in a single call — BEFORE marking the order as paid. This is
+     * simpler and safer than the plugin's previous design (mark "on-hold", debit later
+     * via a webhook-style hook): settle() gives an immediate success/failure answer,
+     * so a failed charge never results in an order that looks placed.
      */
     public function process_payment($order_id) {
         $order = wc_get_order($order_id);
 
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- see validate_fields() above; same already-verified checkout POST.
+        $token = isset($_POST['europan_wc_verified_token']) ? sanitize_text_field(wp_unslash($_POST['europan_wc_verified_token'])) : '';
         $verified_email = WC()->session ? WC()->session->get('europan_wc_verified_email') : '';
-        if (empty($verified_email)) {
+
+        if (empty($token) || empty($verified_email)) {
             wc_add_notice('EUROPAN-Verifikation fehlt. Bitte erneut versuchen.', 'error');
             return array('result' => 'failure');
         }
 
+        $amount    = (float) $order->get_total();
+        $reference = 'WC-' . $order->get_order_number() . '-' . $order_id;
+
+        $settlement = Europan_API_Client::settle($token, $verified_email, $amount, $reference);
+
+        if (empty($settlement['ok'])) {
+            wc_add_notice('EUROPAN-Zahlung fehlgeschlagen: ' . (isset($settlement['error']) ? $settlement['error'] : 'Unbekannter Fehler.'), 'error');
+            $order->add_order_note('⚠️ EUROPAN-Zahlung fehlgeschlagen: ' . (isset($settlement['error']) ? $settlement['error'] : 'Unbekannter Fehler.'));
+            return array('result' => 'failure');
+        }
+
         $order->update_meta_data('_europan_wc_customer_email', $verified_email);
-        $order->update_meta_data('_europan_wc_amount', (float) $order->get_total());
-        $order->update_status('on-hold', 'Warte auf EUROPAN-Guthaben-Belastung (Bestätigung ausstehend).');
+        $order->update_meta_data('_europan_wc_amount', $amount);
+        $order->update_meta_data('_europan_wc_settled', 'yes');
+        if (!empty($settlement['partner_net_amount'])) {
+            $order->update_meta_data('_europan_wc_partner_net', $settlement['partner_net_amount']);
+        }
+        $order->add_order_note(sprintf('EUROPAN-Guthaben belastet: %s (Ref: %s).', wc_price($amount), $reference));
+        if (!empty($settlement['warning'])) {
+            // Customer was still charged successfully — the partner-credit side had an
+            // issue, flagged here for manual follow-up, not something that should
+            // block the sale from the customer's point of view.
+            $order->add_order_note('⚠️ ' . $settlement['warning']);
+        }
         $order->save();
 
-        // Mark the order as paid via the standard WooCommerce mechanism appropriate for a
-        // "manual"/internal gateway: payment_complete() itself triggers
-        // woocommerce_payment_complete, which is exactly the hook Europan_WC_Settlement
-        // listens on to perform the actual debit. This keeps the "debit only after
-        // confirmed payment" rule intact even though there's no external gateway webhook —
-        // here, the "confirmation" IS the successful validate_fields() balance check.
         $order->payment_complete();
 
         WC()->cart->empty_cart();
 
-        // Clear the one-time verification token so it can't be replayed for another order.
+        // Clear the verification email so it can't be reused for another order.
         if (WC()->session) {
-            WC()->session->set('europan_wc_verified_token', null);
+            WC()->session->set('europan_wc_verified_email', null);
         }
 
         return array(

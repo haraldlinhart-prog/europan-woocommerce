@@ -1,8 +1,9 @@
 <?php
 /**
  * Checkout-side AJAX: only the "Guthaben prüfen" (check balance) call happens here,
- * client-facing. The actual debit happens server-side in Europan_WC_Settlement,
- * triggered by woocommerce_payment_complete — never here, never client-triggered.
+ * client-facing. The actual debit happens server-side on europan.direct (see
+ * Europan_API_Client::settle()), triggered by woocommerce_payment_complete via
+ * Europan_WC_Settlement — never here, never client-triggered.
  */
 
 if (!defined('ABSPATH')) exit;
@@ -32,48 +33,38 @@ class Europan_WC_Ajax {
             wp_send_json_error(array('message' => 'Bitte eine gültige E-Mail-Adresse angeben.'), 400);
         }
 
-        $result = Europan_API_Client::check_balance($email, $pin);
-
-        if (!$result['ok']) {
-            wp_send_json_error(array('message' => $result['error']), $result['status']);
-        }
-
         $cart_total = 0.0;
         if (function_exists('WC') && WC()->cart) {
             $cart_total = (float) WC()->cart->get_total('edit');
         }
 
-        // Alles-oder-nichts: das Guthaben muss den KOMPLETTEN Betrag decken, kein Teileinsatz.
-        $sufficient = $result['balance'] >= $cart_total;
+        // The balance check, the sufficiency decision, AND the verification token are
+        // now all issued server-side by europan.direct in a single call — this plugin
+        // no longer generates its own token or decides sufficiency locally. That keeps
+        // the actual money-relevant logic (does the balance cover THIS amount) in the
+        // one place that also performs the debit later (settle()), rather than
+        // duplicating that check here and trusting it stays in sync.
+        $result = Europan_API_Client::check_balance($email, $pin, $cart_total);
 
-        // Server-side "verified" token: short-lived proof that THIS session verified
-        // THIS email+PIN combination, so the later place_order step doesn't have to
-        // ask for the PIN again but also never trusts an unverified client claim.
-        $token = self::issue_verification_token($email, $result['balance']);
+        if (!$result['ok']) {
+            wp_send_json_error(array('message' => isset($result['error']) ? $result['error'] : 'Prüfung fehlgeschlagen.'), isset($result['status']) ? $result['status'] : 502);
+        }
+
+        // Store the verified email in the WC session purely for our own later
+        // cross-check in validate_fields() (does the email at place-order time match
+        // the one just verified) — the token itself is what europan.direct actually
+        // authenticates against; this session value is a local sanity check, not a
+        // security boundary.
+        if (function_exists('WC') && WC()->session) {
+            WC()->session->set('europan_wc_verified_email', strtolower($email));
+        }
 
         wp_send_json_success(array(
             'balance'    => $result['balance'],
             'cart_total' => $cart_total,
-            'sufficient' => $sufficient,
-            'shortfall'  => $sufficient ? 0 : round($cart_total - $result['balance'], 2),
-            'token'      => $token,
+            'sufficient' => !empty($result['sufficient']),
+            'shortfall'  => isset($result['shortfall']) ? $result['shortfall'] : 0,
+            'token'      => $result['token'],
         ));
-    }
-
-    /**
-     * Short-lived (15 min) server-side session proof that email+PIN were verified.
-     * Stored in the WC session (not a client-editable field) so the gateway's
-     * process_payment() can re-check it without re-asking for the PIN, and without
-     * ever trusting a bare "verified: true" flag sent from the browser.
-     */
-    private static function issue_verification_token($email, $balance) {
-        $token = wp_generate_password(32, false);
-        if (function_exists('WC') && WC()->session) {
-            WC()->session->set('europan_wc_verified_email', strtolower($email));
-            WC()->session->set('europan_wc_verified_balance', $balance);
-            WC()->session->set('europan_wc_verified_token', $token);
-            WC()->session->set('europan_wc_verified_at', time());
-        }
-        return $token;
     }
 }

@@ -4,7 +4,7 @@ Tags: woocommerce, payment gateway, prepaid, ecommerce, currency
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.5.4
+Stable tag: 0.6.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -19,8 +19,10 @@ Capital Ltd (europan.group) — as its own payment method inside WooCommerce.
 
 1. The customer selects "Pay with EUROPAN" at checkout.
 2. They enter the email address and PIN from their EUROPAN account.
-3. The plugin verifies the balance against the EUROPAN network (noble-limited.com
-   API) in real time.
+3. The plugin verifies the balance in real time via europan.direct (which itself
+   talks to the EUROPAN network) — this plugin never contacts EUROPAN's core
+   infrastructure directly, only europan.direct, using the shop's own partner
+   API key.
 4. If the balance covers the full order amount, the order can be placed — this
    payment method always requires the **full** amount to be covered by EUROPAN
    balance; partial payment combined with another method is not supported.
@@ -36,16 +38,15 @@ step is needed, the customer simply owes less.
 **For the shop owner:**
 
 * Full-amount debit only, verified via email + PIN — no partial charges.
-* Configurable network commission withheld before the shop's own EUROPAN
-  credit is issued. Note: as of this version, this is an EP credit, not yet a
-  real bank payout — a genuine Euro payout to the shop's bank account is the
-  intended future model but is not yet implemented on the backend.
-* Order notes record every balance debit, partner credit, and any failures
-  that require manual follow-up.
+* The commission EUROPAN charges is resolved automatically from your partner
+  account on europan.direct — there is nothing to configure or enter for this
+  in the plugin itself.
+* Order notes record every charge and any failures that require manual
+  follow-up.
 * Refunds and cancellations automatically credit the customer's EUROPAN
-  balance back (partner credit is intentionally NOT auto-reversed — this is
-  flagged for manual reconciliation instead, to avoid silently leaving a
-  partner's balance negative).
+  balance back (the shop's own credit is intentionally NOT auto-reversed —
+  this is flagged for manual reconciliation instead, to avoid silently
+  leaving a partner's balance negative).
 * Works with both the classic (shortcode) checkout and the block-based
   Cart & Checkout.
 
@@ -59,7 +60,9 @@ This plugin requires an active EUROPAN partner account and API key
    [europan.direct/partners.html](https://www.europan.direct/partners.html) —
    the Free tier issues an active API key immediately, no waiting.
 3. Go to WooCommerce → Settings → Payments → EUROPAN.
-4. Enable the gateway, enter your API key and EUROPAN partner account email.
+4. Enable the gateway and enter your API key. That's the only account-specific
+   setting — your partner email and the commission EUROPAN charges are both
+   resolved automatically from your account, nothing else to configure here.
 5. Optionally configure the customer bonus (percentage or fixed amount).
 6. Save. EUROPAN now appears as a payment option at checkout.
 
@@ -88,17 +91,18 @@ to offer it at all, and whether it's a percentage or a fixed amount.
 == Privacy ==
 
 When a customer checks their EUROPAN balance or completes a payment, this
-plugin sends the following data to the noble-limited.com API (operated by
-Noble Private Capital Ltd):
+plugin sends the following data to europan.direct (operated by PAN21.COM
+Corporate Consultants Ltd on behalf of Noble Private Capital Ltd), using the
+shop's own partner API key:
 
 * The email address and PIN entered by the customer (used only to verify the
   balance — never stored by this plugin beyond the current checkout session).
 * The order amount and a reference derived from the WooCommerce order number.
 
 No other customer or site data is transmitted, and the plugin itself never
-communicates with europan.direct or europan.group at runtime — those sites are
-only used once, manually, by the shop owner to register for a partner account
-and API key.
+contacts EUROPAN's core account infrastructure directly — only europan.direct,
+which is also where the shop owner registers once, manually, for a partner
+account and API key.
 
 == Screenshots ==
 
@@ -106,6 +110,26 @@ and API key.
    bonus notice.
 
 == Changelog ==
+
+= 0.6.0 =
+* SECURITY & ARCHITECTURE: this plugin no longer talks to EUROPAN's core account
+  infrastructure directly under any circumstances. It previously asked shop
+  owners to enter "their own API key" for direct balance-check/debit/credit
+  calls — but that infrastructure only ever recognized one shared internal key
+  used across the whole EUROPAN network, never per-partner keys. Distributing
+  that key to third parties would have allowed debiting any customer's balance
+  without their PIN. The plugin now exclusively calls europan.direct using the
+  shop's own harmless, scoped partner key; europan.direct performs the actual
+  balance/debit/credit operations server-side.
+* Removed the "Partner-E-Mail" and "Netzwerk-Kommission" settings entirely —
+  both are now resolved automatically from the shop's partner account on
+  europan.direct and were never something the shop should have been able to
+  self-declare (the commission in particular directly determines the shop's
+  own payout, so shop-editable was a real integrity gap).
+* Simplified checkout flow: balance verification and the actual charge each
+  happen in a single call now (previously multiple separate steps across two
+  files), with the charge itself completing synchronously before an order is
+  ever marked as placed, rather than being finalized later via a hook.
 
 = 0.5.4 =
 * Fixed several incorrect domain references: partner registration and API
@@ -190,6 +214,12 @@ and API key.
   gateway, full-amount-only, with partner commission and refund handling.
 
 == Upgrade Notice ==
+
+= 0.6.0 =
+Important security/architecture update — please re-enter your API key after
+updating (get it from europan.direct/partners.html if you don't have one yet).
+The "Partner-E-Mail" and "Netzwerk-Kommission" settings are gone; nothing to
+reconfigure there.
 
 = 0.5.0 =
 API key is now entered in the plugin's own settings screen instead of

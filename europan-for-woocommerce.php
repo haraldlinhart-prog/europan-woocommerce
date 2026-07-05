@@ -2,8 +2,8 @@
 /**
  * Plugin Name: EUROPAN for WooCommerce
  * Plugin URI: https://europan.direct
- * Description: EUROPAN-Prepaid-Guthaben als eigene Zahlungsart in WooCommerce. Kunde zahlt den vollen Rechnungsbetrag mit zuvor auf europan.group gekauftem EUROPAN-Guthaben (E-Mail + PIN, alles-oder-nichts). Zielmodell: Partner erhält echte Euro-Auszahlung abzüglich Netzwerk-Kommission, finanziert aus dem EUROPAN-Gutschein-Vorverkauf (Float-Modell) — Stand Juli 2026 technisch noch als EP-Gutschrift umgesetzt, echte Bankauszahlung ist noch nicht gebaut.
- * Version: 0.5.4
+ * Description: EUROPAN-Prepaid-Guthaben als eigene Zahlungsart in WooCommerce. Kunde zahlt den vollen Rechnungsbetrag mit zuvor auf europan.group gekauftem EUROPAN-Guthaben (E-Mail + PIN, alles-oder-nichts). Abrechnung erfolgt ausschließlich über europan.direct — der Shop übermittelt nur seinen Partner-API-Key, alles Weitere (Partnerkonto, Kommission, künftige Auszahlung) wird dort serverseitig verwaltet.
+ * Version: 0.6.0
  * Requires at least: 6.4
  * Requires PHP: 7.4
  * Author: PAN21.COM Corporate Consultants Ltd
@@ -24,7 +24,7 @@
 
 if (!defined('ABSPATH')) exit;
 
-define('EUROPAN_WC_VERSION', '0.5.4');
+define('EUROPAN_WC_VERSION', '0.6.0');
 define('EUROPAN_WC_PLUGIN_FILE', __FILE__);
 define('EUROPAN_WC_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('EUROPAN_WC_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -86,9 +86,8 @@ add_action('before_woocommerce_init', function () {
 });
 
 /**
- * Kein Kommissionssatz-Default mehr auf Aktivierung: die Höhe der Netzwerk-Kommission
- * wird individuell zwischen PAN21/EUROPAN und dem jeweiligen Shop vereinbart — das
- * Plugin selbst soll weder einen Standardwert noch einen "empfohlenen Bereich"
- * andeuten. Ohne explizit gesetzten Wert bleibt commission_pct 0 (siehe
- * Europan_WC_Settlement::handle_payment_complete), niemals eine geratene Zahl.
+ * No commission-related settings or defaults live in this plugin at all (see
+ * class-europan-api-client.php for why): the rate EUROPAN charges a shop is resolved
+ * server-side on europan.direct from the partner's own account, never entered here,
+ * never sent by this plugin, and never visible to the shop through this settings page.
  */
