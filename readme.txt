@@ -2,9 +2,9 @@
 Contributors: europan
 Tags: woocommerce, payment gateway, prepaid, ecommerce, currency
 Requires at least: 6.4
-Tested up to: 6.7
+Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.4.1
+Stable tag: 0.4.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -100,6 +100,18 @@ service: https://europan.group/datenschutz
 
 == Changelog ==
 
+= 0.4.2 =
+* Renamed the plugin to "EUROPAN for WooCommerce" (English "for") — the
+  previous German "für" isn't recognized by the WordPress.org Plugin
+  Directory's trademarked-term check for third-party WooCommerce
+  extensions, even though the meaning is identical.
+* Removed a leftover hidden file (.gitkeep) from the distributed plugin.
+* Fixed two Plugin Check warnings around input sanitization/nonce
+  verification (functionally no change — the input was already safe,
+  the code just needed to match the patterns the automated scanner
+  recognizes).
+* Updated "Tested up to" to the current WordPress version.
+
 = 0.4.1 =
 * Added the official EUROPAN logo as the payment method icon.
 * EUROPAN-denominated amounts in the checkout panel now use the EUROPAN
@@ -123,6 +135,10 @@ service: https://europan.group/datenschutz
   gateway, full-amount-only, with partner commission and refund handling.
 
 == Upgrade Notice ==
+
+= 0.4.2 =
+Plugin renamed to "EUROPAN for WooCommerce" to comply with WordPress.org
+naming rules — no functional changes.
 
 = 0.4.1 =
 Cosmetic update: proper logo and EUROPAN currency symbol in the checkout panel.

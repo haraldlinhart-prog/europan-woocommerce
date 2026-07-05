@@ -1,16 +1,16 @@
 <?php
 /**
- * Plugin Name: EUROPAN für WooCommerce
+ * Plugin Name: EUROPAN for WooCommerce
  * Plugin URI: https://europan.group
  * Description: EUROPAN-Prepaid-Guthaben als eigene Zahlungsart in WooCommerce. Kunde zahlt den vollen Rechnungsbetrag mit zuvor auf europan.group gekauftem EUROPAN-Guthaben (E-Mail + PIN, alles-oder-nichts). Partner erhält Gutschrift abzüglich konfigurierbarer Netzwerk-Kommission (Modell 2: geschlossener Kreislauf, keine Auszahlung in Euro).
- * Version: 0.4.1
+ * Version: 0.4.2
  * Requires at least: 6.4
  * Requires PHP: 7.4
  * Author: PAN21.COM Corporate Consultants Ltd
  * Author URI: https://pan21.com
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: europan-woocommerce
+ * Text Domain: europan-for-woocommerce
  * Requires Plugins: woocommerce
  * WC requires at least: 8.0
  * WC tested up to: 9.5
@@ -24,7 +24,7 @@
 
 if (!defined('ABSPATH')) exit;
 
-define('EUROPAN_WC_VERSION', '0.4.1');
+define('EUROPAN_WC_VERSION', '0.4.2');
 define('EUROPAN_WC_PLUGIN_FILE', __FILE__);
 define('EUROPAN_WC_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('EUROPAN_WC_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -34,7 +34,7 @@ define('EUROPAN_WC_PLUGIN_URL', plugin_dir_url(__FILE__));
  * never fatal-error a site just because this plugin got activated too early/without WC.
  */
 function europan_wc_missing_woocommerce_notice() {
-    echo '<div class="notice notice-error"><p><strong>EUROPAN für WooCommerce</strong> benötigt ein aktives WooCommerce. Das Plugin ist deaktiviert, solange WooCommerce fehlt.</p></div>';
+    echo '<div class="notice notice-error"><p><strong>EUROPAN for WooCommerce</strong> benötigt ein aktives WooCommerce. Das Plugin ist deaktiviert, solange WooCommerce fehlt.</p></div>';
 }
 
 function europan_wc_init() {

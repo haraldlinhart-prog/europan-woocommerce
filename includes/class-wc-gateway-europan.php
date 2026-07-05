@@ -227,6 +227,13 @@ class WC_Gateway_Europan extends WC_Payment_Gateway {
      * trusts anything the client claims about balance sufficiency.
      */
     public function validate_fields() {
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- WooCommerce
+        // itself already verifies the 'woocommerce-process_checkout' nonce inside
+        // WC_Checkout::process_checkout() BEFORE it ever calls any gateway's
+        // validate_fields(). Adding a second, redundant nonce check here would not
+        // add any real protection — this reads a value from that same
+        // already-nonce-verified POST request, it's just that Plugin Check's static
+        // analysis can't see the nonce check that happens in the calling function.
         $token = isset($_POST['europan_wc_verified_token']) ? sanitize_text_field(wp_unslash($_POST['europan_wc_verified_token'])) : '';
 
         if (empty($token) || !WC()->session) {

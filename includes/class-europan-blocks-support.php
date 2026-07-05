@@ -59,7 +59,7 @@ final class Europan_Blocks_Support extends \Automattic\WooCommerce\Blocks\Paymen
         );
 
         if (function_exists('wp_set_script_translations')) {
-            wp_set_script_translations('europan-blocks-integration', 'europan-woocommerce');
+            wp_set_script_translations('europan-blocks-integration', 'europan-for-woocommerce');
         }
 
         return array('europan-blocks-integration');
