@@ -4,7 +4,7 @@ Tags: woocommerce, payment gateway, prepaid, ecommerce, currency
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.6.0
+Stable tag: 0.6.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -38,9 +38,10 @@ step is needed, the customer simply owes less.
 **For the shop owner:**
 
 * Full-amount debit only, verified via email + PIN — no partial charges.
-* The commission EUROPAN charges is resolved automatically from your partner
-  account on europan.direct — there is nothing to configure or enter for this
-  in the plugin itself.
+* Your shop is credited the full (already, if applicable, discounted) order
+  amount — this plugin never deducts anything on EUROPAN's behalf. EUROPAN's
+  own service fee is invoiced to you separately and manually; it has nothing
+  to do with this plugin's settings.
 * Order notes record every charge and any failures that require manual
   follow-up.
 * Refunds and cancellations automatically credit the customer's EUROPAN
@@ -61,8 +62,10 @@ This plugin requires an active EUROPAN partner account and API key
    the Free tier issues an active API key immediately, no waiting.
 3. Go to WooCommerce → Settings → Payments → EUROPAN.
 4. Enable the gateway and enter your API key. That's the only account-specific
-   setting — your partner email and the commission EUROPAN charges are both
-   resolved automatically from your account, nothing else to configure here.
+   setting — your partner email is resolved automatically from your account,
+   and your shop is always credited the full order amount (EUROPAN's own
+   service fee, if any, is billed to you separately and manually — it plays
+   no role in this plugin).
 5. Optionally configure the customer bonus (percentage or fixed amount).
 6. Save. EUROPAN now appears as a payment option at checkout.
 
@@ -110,6 +113,16 @@ account and API key.
    bonus notice.
 
 == Changelog ==
+
+= 0.6.1 =
+* Corrected a mistake introduced in 0.6.0: the shop is now credited the FULL
+  order amount, with no automatic deduction whatsoever. An earlier version of
+  the new europan.direct-based settlement briefly deducted a per-partner
+  commission automatically — that was wrong. Any discount the customer
+  receives is entirely the shop's own choice (the plugin's own configurable
+  bonus feature); EUROPAN's own service fee is invoiced to the shop manually
+  and separately, and has no representation anywhere in this plugin's code,
+  settings, or the europan.direct database.
 
 = 0.6.0 =
 * SECURITY & ARCHITECTURE: this plugin no longer talks to EUROPAN's core account

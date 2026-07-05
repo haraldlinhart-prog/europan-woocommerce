@@ -93,13 +93,17 @@ class Europan_API_Client {
 
     /**
      * Charge the order: debits the customer the full amount and credits the shop's
-     * own EUROPAN account net of EUROPAN's commission — that commission rate is
-     * looked up server-side on europan.direct, this plugin never sends or knows it.
-     * Requires a fresh token from check_balance(); one-time use, consumed regardless
-     * of outcome.
+     * own EUROPAN account the SAME full amount — no deduction. Any discount the
+     * customer received (the shop's own configurable "EUROPAN-Bonus" — see
+     * Europan_WC_Settlement::apply_checkout_bonus_fee()) is the shop's own discount,
+     * already reflected in $order_amount by the time it gets here. EUROPAN's own
+     * service fee (currently ~4.8%, published on europan.direct and kept up to date
+     * by hand) is billed to the shop manually and separately — it is never computed,
+     * sent, or applied anywhere in this plugin. Requires a fresh token from
+     * check_balance(); one-time use, consumed regardless of outcome.
      *
      * @return array { ok: bool, customer_debited?: bool, partner_credited?: bool,
-     *                 partner_net_amount?: float, warning?: string, error?: string,
+     *                 partner_credited_amount?: float, warning?: string, error?: string,
      *                 already_processed?: bool }
      */
     public static function settle($token, $email, $order_amount, $order_reference) {

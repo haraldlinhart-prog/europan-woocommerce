@@ -275,8 +275,8 @@ class WC_Gateway_Europan extends WC_Payment_Gateway {
         $order->update_meta_data('_europan_wc_customer_email', $verified_email);
         $order->update_meta_data('_europan_wc_amount', $amount);
         $order->update_meta_data('_europan_wc_settled', 'yes');
-        if (!empty($settlement['partner_net_amount'])) {
-            $order->update_meta_data('_europan_wc_partner_net', $settlement['partner_net_amount']);
+        if (!empty($settlement['partner_credited_amount'])) {
+            $order->update_meta_data('_europan_wc_partner_credited', $settlement['partner_credited_amount']);
         }
         $order->add_order_note(sprintf('EUROPAN-Guthaben belastet: %s (Ref: %s).', wc_price($amount), $reference));
         if (!empty($settlement['warning'])) {
