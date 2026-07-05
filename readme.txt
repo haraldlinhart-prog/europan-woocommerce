@@ -4,7 +4,7 @@ Tags: woocommerce, payment gateway, prepaid, ecommerce, currency
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.6.1
+Stable tag: 0.6.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -113,6 +113,13 @@ account and API key.
    bonus notice.
 
 == Changelog ==
+
+= 0.6.2 =
+* Fixed two Plugin Check nonce-verification warnings that were reintroduced
+  during the 0.6.0 architecture rewrite: the phpcs:ignore annotation must sit
+  on the exact same line as the flagged code to have any effect — it had
+  drifted onto a separate comment line above it again (same class of mistake
+  as in 0.5.3, now fixed in both places it recurred).
 
 = 0.6.1 =
 * Corrected a mistake introduced in 0.6.0: the shop is now credited the FULL

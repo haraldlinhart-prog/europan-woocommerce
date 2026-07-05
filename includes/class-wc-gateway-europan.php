@@ -226,11 +226,10 @@ class WC_Gateway_Europan extends WC_Payment_Gateway {
      * drift out of sync with the one that actually moves money.
      */
     public function validate_fields() {
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- WooCommerce
-        // itself already verifies the 'woocommerce-process_checkout' nonce inside
-        // WC_Checkout::process_checkout() BEFORE it ever calls any gateway's
+        // WooCommerce itself already verifies the 'woocommerce-process_checkout' nonce
+        // inside WC_Checkout::process_checkout() BEFORE it ever calls any gateway's
         // validate_fields(); this reads a value from that same already-verified POST.
-        $token = isset($_POST['europan_wc_verified_token']) ? sanitize_text_field(wp_unslash($_POST['europan_wc_verified_token'])) : '';
+        $token = isset($_POST['europan_wc_verified_token']) ? sanitize_text_field(wp_unslash($_POST['europan_wc_verified_token'])) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
         $verified_email = WC()->session ? WC()->session->get('europan_wc_verified_email') : '';
 
         if (empty($token) || empty($verified_email)) {
@@ -252,8 +251,8 @@ class WC_Gateway_Europan extends WC_Payment_Gateway {
     public function process_payment($order_id) {
         $order = wc_get_order($order_id);
 
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- see validate_fields() above; same already-verified checkout POST.
-        $token = isset($_POST['europan_wc_verified_token']) ? sanitize_text_field(wp_unslash($_POST['europan_wc_verified_token'])) : '';
+        // Same already-verified checkout POST as validate_fields() above.
+        $token = isset($_POST['europan_wc_verified_token']) ? sanitize_text_field(wp_unslash($_POST['europan_wc_verified_token'])) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
         $verified_email = WC()->session ? WC()->session->get('europan_wc_verified_email') : '';
 
         if (empty($token) || empty($verified_email)) {
