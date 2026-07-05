@@ -70,6 +70,13 @@ final class Europan_Blocks_Support extends \Automattic\WooCommerce\Blocks\Paymen
      * (Titel, Beschreibung, Icon, Ajax-URL/Nonce für den Guthaben-Check).
      * Im Block-Checkout gibt es kein wp_localize_script wie im klassischen Flow,
      * daher läuft das hier über get_payment_method_data().
+     *
+     * bonusHint wird über WC_Gateway_Europan::get_bonus_hint_html() erzeugt — exakt
+     * dieselbe Methode wie im klassischen Checkout (class-wc-gateway-europan.php,
+     * payment_fields()) — damit es nur EINE Stelle gibt, die "ist ein Bonus aktiv
+     * und wie wird er beschrieben" entscheidet. Ohne dieses Feld hier würde der
+     * Block-Checkout unabhängig vom klassischen Checkout aus dem Tritt geraten,
+     * sobald sich an der Bonus-Formulierung etwas ändert.
      */
     public function get_payment_method_data() {
         return array(
@@ -78,6 +85,7 @@ final class Europan_Blocks_Support extends \Automattic\WooCommerce\Blocks\Paymen
             'icon'        => EUROPAN_WC_PLUGIN_URL . 'assets/img/europan-icon.png',
             'ajaxUrl'     => admin_url('admin-ajax.php'),
             'nonce'       => wp_create_nonce('europan_wc_nonce'),
+            'bonusHint'   => $this->gateway ? $this->gateway->get_bonus_hint_html() : '',
             'supports'    => $this->get_supported_features(),
         );
     }

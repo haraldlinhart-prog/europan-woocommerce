@@ -20,6 +20,7 @@
     var el = window.wp.element.createElement;
     var useState = window.wp.element.useState;
     var useEffect = window.wp.element.useEffect;
+    var RawHTML = window.wp.element.RawHTML;
 
     function fmtEuro(value) {
         return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(value);
@@ -118,6 +119,9 @@
                 'Guthaben in Höhe des kompletten Rechnungsbetrags — Teileinsatz ist bei dieser Zahlungsart ' +
                 'nicht möglich.'
             ),
+            settings.bonusHint
+                ? el(RawHTML, { className: 'europan-wc-bonus-hint' }, settings.bonusHint)
+                : null,
             el('div', { className: 'europan-wc-form-row' },
                 el('input', {
                     type: 'email',

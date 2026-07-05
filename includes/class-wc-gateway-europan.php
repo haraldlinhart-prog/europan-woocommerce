@@ -197,7 +197,7 @@ class WC_Gateway_Europan extends WC_Payment_Gateway {
      * be worse than showing the rule and letting the order confirmation state the
      * exact figure.
      */
-    private function get_bonus_hint_html() {
+    public function get_bonus_hint_html() {
         if ($this->get_option('bonus_enabled', 'no') !== 'yes') {
             return '';
         }
