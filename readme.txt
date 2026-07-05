@@ -4,7 +4,7 @@ Tags: woocommerce, payment gateway, prepaid, ecommerce, currency
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.5.1
+Stable tag: 0.5.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -102,6 +102,15 @@ service: https://europan.group/datenschutz
    bonus notice.
 
 == Changelog ==
+
+= 0.5.2 =
+* Clarified that payouts to shop owners are currently handled manually
+  (periodic bank transfer, no automated payout run) and that bank details
+  for this must be provided during partner registration on europan.direct —
+  not in this plugin's own settings, which never transmits bank data
+  anywhere. Also recommends using a dedicated partner email address (never
+  used for personal EUROPAN spending) so the earned commission balance stays
+  distinguishable from any personal balance on the same account.
 
 = 0.5.1 =
 * Documentation correction only, no functional change: removed outdated

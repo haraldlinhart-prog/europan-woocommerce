@@ -73,14 +73,14 @@ class WC_Gateway_Europan extends WC_Payment_Gateway {
             'partner_email' => array(
                 'title'       => 'Partner-E-Mail (EUROPAN-Konto)',
                 'type'        => 'email',
-                'description' => 'Die E-Mail-Adresse, unter der IHR EUROPAN-Partnerkonto geführt wird (dieselbe wie bei der Registrierung auf europan.group/partner). Hierhin fließt die Gutschrift abzüglich Kommission.',
+                'description' => 'Die E-Mail-Adresse, unter der IHR EUROPAN-Partnerkonto geführt wird (dieselbe wie bei der Registrierung auf europan.direct). Hierhin fließt die Gutschrift abzüglich Kommission. EMPFEHLUNG: Verwenden Sie eine E-Mail-Adresse, die AUSSCHLIESSLICH für dieses Partnerkonto genutzt wird — nie zum eigenen privaten Einkaufen mit EUROPAN. Sonst vermischt sich Ihre verdiente Kommission mit eigenem Guthaben im selben Kontostand, und der Betrag ist am Abrechnungstag nicht mehr eindeutig als "das schuldet mir EUROPAN" erkennbar.',
                 'default'     => '',
                 'desc_tip'    => true,
             ),
             'commission_pct' => array(
                 'title'       => 'Netzwerk-Kommission (%)',
                 'type'        => 'number',
-                'description' => 'Wird von jeder EUROPAN-Zahlung einbehalten, bevor Ihnen die Gutschrift erteilt wird. Empfohlener Bereich: 2–5%. HINWEIS (Stand Juli 2026): Aktuell erfolgt die Gutschrift als EP-Guthaben (kein Bankauszahlungs-Mechanismus im Backend implementiert) — eine echte Euro-Auszahlung an Ihr Bankkonto ist als Zielmodell vorgesehen, aber noch nicht gebaut. Bitte vor kommerziellem Einsatz mit PAN21 abklären.',
+                'description' => 'Wird von jeder EUROPAN-Zahlung einbehalten, bevor Ihnen die Gutschrift erteilt wird. Empfohlener Bereich: 2–5%. Die Gutschrift erfolgt als EP-Guthaben auf Ihr Partnerkonto; die Auszahlung an Ihr Bankkonto erfolgt in unregelmäßigen Abständen (aktuell manuell, kein automatisierter Auszahlungslauf). Ihre Bankverbindung dafür geben Sie bei der Partner-Registrierung auf europan.direct an — NICHT hier, diese Einstellungsseite übermittelt keine Bankdaten an EUROPAN.',
                 'default'     => get_option('europan_wc_commission_pct', 3.0),
                 'custom_attributes' => array('step' => '0.1', 'min' => '0', 'max' => '10'),
                 'desc_tip'    => true,
