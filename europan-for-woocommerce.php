@@ -1,9 +1,9 @@
 <?php
 /**
  * Plugin Name: EUROPAN for WooCommerce
- * Plugin URI: https://europan.group
+ * Plugin URI: https://europan.direct
  * Description: EUROPAN-Prepaid-Guthaben als eigene Zahlungsart in WooCommerce. Kunde zahlt den vollen Rechnungsbetrag mit zuvor auf europan.group gekauftem EUROPAN-Guthaben (E-Mail + PIN, alles-oder-nichts). Zielmodell: Partner erhält echte Euro-Auszahlung abzüglich Netzwerk-Kommission, finanziert aus dem EUROPAN-Gutschein-Vorverkauf (Float-Modell) — Stand Juli 2026 technisch noch als EP-Gutschrift umgesetzt, echte Bankauszahlung ist noch nicht gebaut.
- * Version: 0.5.3
+ * Version: 0.5.4
  * Requires at least: 6.4
  * Requires PHP: 7.4
  * Author: PAN21.COM Corporate Consultants Ltd
@@ -24,7 +24,7 @@
 
 if (!defined('ABSPATH')) exit;
 
-define('EUROPAN_WC_VERSION', '0.5.3');
+define('EUROPAN_WC_VERSION', '0.5.4');
 define('EUROPAN_WC_PLUGIN_FILE', __FILE__);
 define('EUROPAN_WC_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('EUROPAN_WC_PLUGIN_URL', plugin_dir_url(__FILE__));

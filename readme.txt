@@ -4,7 +4,7 @@ Tags: woocommerce, payment gateway, prepaid, ecommerce, currency
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.5.3
+Stable tag: 0.5.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -19,7 +19,8 @@ Capital Ltd (europan.group) — as its own payment method inside WooCommerce.
 
 1. The customer selects "Pay with EUROPAN" at checkout.
 2. They enter the email address and PIN from their EUROPAN account.
-3. The plugin verifies the balance against europan.group in real time.
+3. The plugin verifies the balance against the EUROPAN network (noble-limited.com
+   API) in real time.
 4. If the balance covers the full order amount, the order can be placed — this
    payment method always requires the **full** amount to be covered by EUROPAN
    balance; partial payment combined with another method is not supported.
@@ -49,15 +50,16 @@ step is needed, the customer simply owes less.
   Cart & Checkout.
 
 This plugin requires an active EUROPAN partner account and API key
-(europan.group) to function — it is not a general-purpose currency plugin.
+(europan.direct) to function — it is not a general-purpose currency plugin.
 
 == Installation ==
 
 1. Install and activate the plugin (requires WooCommerce to be active).
-2. Request a EUROPAN partner account and API key (see "EUROPAN-Partnerkonto"
-   notice in the gateway settings for current contact details).
+2. Register for a EUROPAN partner account and API key at
+   [europan.direct/partners.html](https://www.europan.direct/partners.html) —
+   the Free tier issues an active API key immediately, no waiting.
 3. Go to WooCommerce → Settings → Payments → EUROPAN.
-4. Enable the gateway, enter your EUROPAN partner account email and API key.
+4. Enable the gateway, enter your API key and EUROPAN partner account email.
 5. Optionally configure the customer bonus (percentage or fixed amount).
 6. Save. EUROPAN now appears as a payment option at checkout.
 
@@ -75,8 +77,8 @@ different payment method is chosen.
 
 = Does the shop owner need a EUROPAN account? =
 
-Yes — a EUROPAN partner account and API key from europan.group are required to
-receive credits for completed orders.
+Yes — a EUROPAN partner account and API key from europan.direct are required
+to receive credits for completed orders.
 
 = Is the bonus optional? =
 
@@ -86,15 +88,17 @@ to offer it at all, and whether it's a percentage or a fixed amount.
 == Privacy ==
 
 When a customer checks their EUROPAN balance or completes a payment, this
-plugin sends the following data to the europan.group / noble-limited.com API
-(operated by Noble Private Capital Ltd):
+plugin sends the following data to the noble-limited.com API (operated by
+Noble Private Capital Ltd):
 
 * The email address and PIN entered by the customer (used only to verify the
   balance — never stored by this plugin beyond the current checkout session).
 * The order amount and a reference derived from the WooCommerce order number.
 
-No other customer or site data is transmitted. Privacy policy of the receiving
-service: https://europan.group/datenschutz
+No other customer or site data is transmitted, and the plugin itself never
+communicates with europan.direct or europan.group at runtime — those sites are
+only used once, manually, by the shop owner to register for a partner account
+and API key.
 
 == Screenshots ==
 
@@ -102,6 +106,16 @@ service: https://europan.group/datenschutz
    bonus notice.
 
 == Changelog ==
+
+= 0.5.4 =
+* Fixed several incorrect domain references: partner registration and API
+  keys come from europan.direct, not europan.group (europan.group is only
+  where end customers buy EUROPAN vouchers — that reference was correct and
+  is unchanged). Also corrected the description of which API the plugin
+  actually talks to at runtime (noble-limited.com), and removed a privacy
+  policy link that pointed to a page which doesn't exist.
+* Installation instructions now link directly to the live, self-service
+  registration page (europan.direct/partners.html).
 
 = 0.5.3 =
 * Fixed a Plugin Check nonce-verification warning by moving the phpcs:ignore

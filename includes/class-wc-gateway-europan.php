@@ -53,7 +53,7 @@ class WC_Gateway_Europan extends WC_Payment_Gateway {
             'api_key' => array(
                 'title'       => 'API-Key',
                 'type'        => 'password',
-                'description' => 'Ihr persönlicher EUROPAN-API-Key aus dem Partner-Dashboard auf europan.group. Wird ausschließlich für die serverseitige Kommunikation mit der EUROPAN-API verwendet (Guthaben prüfen, belasten, Gutschriften) — niemals an den Browser des Kunden weitergegeben.',
+                'description' => 'Ihr persönlicher EUROPAN-API-Key aus der Partner-Registrierung auf <a href="https://www.europan.direct/partners.html" target="_blank" rel="noopener">europan.direct</a>. Wird ausschließlich für die serverseitige Kommunikation mit der EUROPAN-API verwendet (Guthaben prüfen, belasten, Gutschriften) — niemals an den Browser des Kunden weitergegeben.',
                 'default'     => '',
                 'desc_tip'    => true,
             ),

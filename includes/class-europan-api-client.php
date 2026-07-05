@@ -21,7 +21,7 @@ class Europan_API_Client {
      * Priority order:
      * 1. The gateway's own "API-Key" settings field (WooCommerce → Settings →
      *    Payments → EUROPAN) — this is the PRIMARY, self-service path: the shop
-     *    operator signs up for their own EUROPAN partner account at europan.group,
+     *    operator signs up for their own EUROPAN partner account at europan.direct,
      *    gets their own key, and enters it directly in the plugin's own settings
      *    screen, exactly like every other WooCommerce payment gateway (Stripe,
      *    PayPal, etc.) expects. This is what makes the plugin usable by anyone who
