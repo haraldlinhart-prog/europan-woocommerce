@@ -73,6 +73,36 @@ class WC_Gateway_Europan extends WC_Payment_Gateway {
                 'custom_attributes' => array('step' => '0.1', 'min' => '0', 'max' => '10'),
                 'desc_tip'    => true,
             ),
+            'bonus_title' => array(
+                'title'       => 'Kundenbonus',
+                'type'        => 'title',
+                'description' => 'Optionaler zusätzlicher Anreiz für Zahlungen per EUROPAN. Da diese Zahlungsart ohnehin immer den vollen Betrag verlangt (kein Teileinsatz), ist ein Bonus hier — anders als beim ursprünglichen "Doppel-Wums"-Konzept mit Teilzahlung — ohne zusätzliche Komplexität möglich: der Kunde bekommt nach erfolgreicher Zahlung einfach einen Teil seines Guthabens als EUROPAN zurückgutgeschrieben.',
+            ),
+            'bonus_enabled' => array(
+                'title'   => 'Bonus aktivieren',
+                'type'    => 'checkbox',
+                'label'   => 'Kunden, die mit EUROPAN bezahlen, einen zusätzlichen Bonus gutschreiben',
+                'default' => 'no',
+            ),
+            'bonus_type' => array(
+                'title'       => 'Bonus-Art',
+                'type'        => 'select',
+                'options'     => array(
+                    'percent' => 'Prozentual vom Bestellwert',
+                    'fixed'   => 'Fester Betrag pro Bestellung',
+                ),
+                'default'     => 'percent',
+                'description' => 'Bezieht sich immer auf den vollen, per EUROPAN bezahlten Bestellbetrag.',
+                'desc_tip'    => true,
+            ),
+            'bonus_value' => array(
+                'title'       => 'Bonus-Höhe',
+                'type'        => 'number',
+                'description' => 'Je nach Bonus-Art entweder ein Prozentsatz (z. B. 2 für 2%) oder ein fester Euro-Betrag (z. B. 5 für 5,00 €).',
+                'default'     => 2,
+                'custom_attributes' => array('step' => '0.1', 'min' => '0'),
+                'desc_tip'    => true,
+            ),
         );
     }
 
@@ -109,6 +139,8 @@ class WC_Gateway_Europan extends WC_Payment_Gateway {
         if ($this->description) {
             echo '<p>' . wp_kses_post($this->description) . '</p>';
         }
+
+        $bonus_html = $this->get_bonus_hint_html();
         ?>
         <div class="europan-wc-panel">
             <div id="europan-wc-status-badge" class="europan-wc-badge">
@@ -127,6 +159,10 @@ class WC_Gateway_Europan extends WC_Payment_Gateway {
                 entspricht 1&nbsp;€ EUROPAN. Ihre PIN dafür erhalten Sie direkt mit Ihrer
                 Bestellbestätigung.
             </p>
+
+            <?php if ($bonus_html): ?>
+                <div class="europan-wc-bonus-hint"><?php echo $bonus_html; ?></div>
+            <?php endif; ?>
 
             <div class="europan-wc-form-row">
                 <input type="email" id="europan-wc-email" placeholder="ihre@email.de" autocomplete="email">
@@ -148,6 +184,40 @@ class WC_Gateway_Europan extends WC_Payment_Gateway {
             <input type="hidden" name="europan_wc_verified_token" id="europan-wc-verified-token" value="">
         </div>
         <?php
+    }
+
+    /**
+     * Human-readable bonus announcement shown at checkout when the shop operator has
+     * enabled a bonus. Deliberately describes the bonus in general terms ("X% Bonus"
+     * or a fixed amount) rather than pre-computing an exact euro figure here — the
+     * cart total can still change (coupons, shipping) between page render and order
+     * placement, and the actual amount is calculated once, authoritatively, in
+     * Europan_WC_Settlement::maybe_credit_bonus() against the final order total.
+     * Showing a provisional number here that might not match the final credit would
+     * be worse than showing the rule and letting the order confirmation state the
+     * exact figure.
+     */
+    private function get_bonus_hint_html() {
+        if ($this->get_option('bonus_enabled', 'no') !== 'yes') {
+            return '';
+        }
+
+        $type  = $this->get_option('bonus_type', 'percent');
+        $value = (float) $this->get_option('bonus_value', 0);
+        if ($value <= 0) {
+            return '';
+        }
+
+        if ($type === 'fixed') {
+            $desc = sprintf('%s EUROPAN-Bonus', wc_price($value));
+        } else {
+            $desc = sprintf('%s%% EUROPAN-Bonus', rtrim(rtrim(number_format($value, 1, ',', '.'), '0'), ','));
+        }
+
+        return sprintf(
+            '<strong>%s</strong> auf jede vollständig per EUROPAN bezahlte Bestellung — wird Ihnen nach erfolgreicher Zahlung automatisch als zusätzliches Guthaben gutgeschrieben.',
+            esc_html($desc)
+        );
     }
 
     /**

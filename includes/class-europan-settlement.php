@@ -87,7 +87,76 @@ class Europan_WC_Settlement {
             }
         }
 
+        self::maybe_credit_bonus($order, $email, $amount, $reference, $gateway_settings);
+
         $order->save();
+    }
+
+    /**
+     * Shop-operator-configured checkout bonus: credits a percentage or fixed amount
+     * of the (fully EUROPAN-paid) order total back to the CUSTOMER's own balance.
+     *
+     * This is intentionally simple compared to the original "Doppel-Wums" concept
+     * discussed for the canonical EUROPAN widget, which required supporting partial
+     * cart payment (some paid by EUROPAN, some by another method) to make the bonus
+     * meaningful. That complexity does not apply here: this gateway already requires
+     * the customer's EUROPAN balance to cover the ENTIRE order (see
+     * WC_Gateway_Europan::validate_fields — no partial use, ever), so "did they
+     * qualify" is not a separate condition to compute — every settled order via this
+     * gateway already qualifies by construction. The bonus is therefore just a
+     * second, independent credit, gated only by the shop's own on/off + amount
+     * settings, with no interaction with payment method mixing at all.
+     *
+     * Runs AFTER the partner credit (not before, not in parallel) so that a bonus
+     * failure never blocks or gets confused with partner reconciliation, and so the
+     * order notes read in a natural chronological story: debit → partner credit →
+     * bonus. Failure here is logged but does not roll back the order — the customer
+     * has already paid and received their goods; a failed bonus credit is a
+     * "manual top-up owed" situation, not a failed sale.
+     */
+    private static function maybe_credit_bonus($order, $email, $amount, $reference, $gateway_settings) {
+        if (empty($gateway_settings['bonus_enabled']) || $gateway_settings['bonus_enabled'] !== 'yes') {
+            return;
+        }
+
+        $bonus_type  = !empty($gateway_settings['bonus_type']) ? $gateway_settings['bonus_type'] : 'percent';
+        $bonus_value = isset($gateway_settings['bonus_value']) ? (float) $gateway_settings['bonus_value'] : 0;
+
+        if ($bonus_value <= 0) {
+            return;
+        }
+
+        if ($bonus_type === 'fixed') {
+            $bonus_amount = round($bonus_value, 2);
+        } else {
+            $bonus_amount = round($amount * ($bonus_value / 100), 2);
+        }
+
+        if ($bonus_amount <= 0) {
+            return;
+        }
+
+        // A fixed bonus larger than the order itself would make the bonus worth more
+        // than the purchase — cap it at the order amount rather than silently allow
+        // shop-config mistakes to hand out disproportionate credit.
+        if ($bonus_amount > $amount) {
+            $bonus_amount = $amount;
+        }
+
+        $bonus_reference = $reference . '-BONUS';
+
+        $bonus_desc = ($bonus_type === 'fixed')
+            ? sprintf('EUROPAN-Bonus Bestellung #%s (fester Betrag)', $order->get_order_number())
+            : sprintf('EUROPAN-Bonus Bestellung #%s (%.1f%% vom Bestellwert)', $order->get_order_number(), $bonus_value);
+
+        $bonus_credit = Europan_API_Client::credit_bonus($email, $bonus_amount, $bonus_desc, $bonus_reference);
+
+        if ($bonus_credit['ok']) {
+            $order->update_meta_data('_europan_wc_bonus_amount', $bonus_amount);
+            $order->add_order_note(sprintf('EUROPAN-Bonus gutgeschrieben: %s (Ref: %s). Neues Guthaben: %s.', wc_price($bonus_amount), $bonus_reference, $bonus_credit['new_balance']));
+        } else {
+            $order->add_order_note('⚠️ EUROPAN-Bonus-Gutschrift fehlgeschlagen: ' . $bonus_credit['error'] . ' — Kunde wurde bereits regulär belastet, Bonus-Nachbuchung manuell erforderlich.');
+        }
     }
 
     /**

@@ -234,4 +234,60 @@ class Europan_API_Client {
 
         return array('ok' => true, 'net_amount' => $net_amount);
     }
+
+    /**
+     * Credit a shop-configured checkout bonus back to the CUSTOMER's own EUROPAN
+     * balance, after a full-amount EUROPAN payment has already been debited and
+     * settled. This is deliberately a separate method from credit_refund() even
+     * though it calls the same /api/v1/credit endpoint — refunds and bonuses must
+     * stay distinguishable in reporting/reconciliation (different reference prefix,
+     * different order note wording), and keeping them as separate call sites means
+     * a future change to one (e.g. adding a bonus expiry or a refund-specific audit
+     * flag) can't accidentally leak into the other.
+     *
+     * Only ever called for a shop that opted in via the gateway's own
+     * "Bonus aktivieren" setting — this method itself has no opinion on whether a
+     * bonus should be granted, it only performs the credit once the caller (see
+     * Europan_WC_Settlement::maybe_credit_bonus) has already decided the amount.
+     *
+     * @return array { ok: bool, new_balance?: float, error?: string }
+     */
+    public static function credit_bonus($email, $amount, $description, $reference) {
+        $key = self::api_key();
+        if (empty($key)) {
+            return array('ok' => false, 'error' => 'Not configured');
+        }
+
+        $response = wp_remote_post(self::BASE_URL . '/api/v1/credit', array(
+            'timeout' => 15,
+            'headers' => array(
+                'Content-Type'  => 'application/json',
+                'Authorization' => 'Bearer ' . $key,
+            ),
+            'body' => wp_json_encode(array(
+                'email'       => strtolower($email),
+                'coin_id'     => 'europan',
+                'amount'      => $amount,
+                'description' => $description,
+                'reference'   => $reference,
+            )),
+        ));
+
+        if (is_wp_error($response)) {
+            return array('ok' => false, 'error' => 'EUROPAN-Dienst nicht erreichbar bei der Bonus-Gutschrift.');
+        }
+
+        $status = wp_remote_retrieve_response_code($response);
+        $body   = json_decode(wp_remote_retrieve_body($response), true);
+
+        if ($status < 200 || $status >= 300) {
+            $err = is_array($body) && !empty($body['error']) ? $body['error'] : 'Bonus-Gutschrift fehlgeschlagen.';
+            return array('ok' => false, 'error' => $err);
+        }
+
+        return array(
+            'ok'          => true,
+            'new_balance' => isset($body['new_balance']) ? (float) $body['new_balance'] : null,
+        );
+    }
 }

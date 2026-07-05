@@ -77,3 +77,14 @@
 }
 .europan-wc-result--ok    { color: var(--ep-green); }
 .europan-wc-result--error { color: #c0392b; }
+
+.europan-wc-bonus-hint {
+    font-size: 0.8rem;
+    color: var(--ep-navy);
+    line-height: 1.55;
+    background: rgba(201, 150, 58, 0.1);
+    border: 1px solid var(--ep-gold);
+    border-radius: 6px;
+    padding: 0.55rem 0.75rem;
+    margin: 0 0 0.75rem;
+}
