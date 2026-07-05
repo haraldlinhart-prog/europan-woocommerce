@@ -45,6 +45,18 @@ class WC_Gateway_Europan extends WC_Payment_Gateway {
                 'label'   => 'EUROPAN als Zahlungsart im Checkout anzeigen',
                 'default' => 'no',
             ),
+            'account_title' => array(
+                'title'       => 'EUROPAN-Partnerkonto',
+                'type'        => 'title',
+                'description' => 'Um EUROPAN als Zahlungsart anzubieten, benötigen Sie einen persönlichen API-Key für Ihr EUROPAN-Partnerkonto. Ein Selbstbedienungs-Dashboard dafür gibt es aktuell noch nicht — bitte wenden Sie sich für die Einrichtung Ihres Partnerkontos und Ihres API-Keys an den EUROPAN-Support. Tragen Sie Ihren API-Key und Ihre Partner-E-Mail-Adresse anschließend unten ein.',
+            ),
+            'api_key' => array(
+                'title'       => 'API-Key',
+                'type'        => 'password',
+                'description' => 'Ihr persönlicher EUROPAN-API-Key aus dem Partner-Dashboard auf europan.group. Wird ausschließlich für die serverseitige Kommunikation mit der EUROPAN-API verwendet (Guthaben prüfen, belasten, Gutschriften) — niemals an den Browser des Kunden weitergegeben.',
+                'default'     => '',
+                'desc_tip'    => true,
+            ),
             'title' => array(
                 'title'       => 'Titel',
                 'type'        => 'text',
@@ -61,7 +73,7 @@ class WC_Gateway_Europan extends WC_Payment_Gateway {
             'partner_email' => array(
                 'title'       => 'Partner-E-Mail (EUROPAN-Konto)',
                 'type'        => 'email',
-                'description' => 'Die E-Mail-Adresse, unter der IHR EUROPAN-Partnerkonto geführt wird. Hierhin fließt die Gutschrift abzüglich Kommission.',
+                'description' => 'Die E-Mail-Adresse, unter der IHR EUROPAN-Partnerkonto geführt wird (dieselbe wie bei der Registrierung auf europan.group/partner). Hierhin fließt die Gutschrift abzüglich Kommission.',
                 'default'     => '',
                 'desc_tip'    => true,
             ),

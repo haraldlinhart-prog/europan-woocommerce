@@ -4,7 +4,7 @@ Tags: woocommerce, payment gateway, prepaid, ecommerce, currency
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.4.2
+Stable tag: 0.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -53,10 +53,12 @@ This plugin requires an active EUROPAN partner account and API key
 == Installation ==
 
 1. Install and activate the plugin (requires WooCommerce to be active).
-2. Go to WooCommerce → Settings → Payments → EUROPAN.
-3. Enable the gateway, enter your EUROPAN partner account email and API key.
-4. Optionally configure the customer bonus (percentage or fixed amount).
-5. Save. EUROPAN now appears as a payment option at checkout.
+2. Request a EUROPAN partner account and API key (see "EUROPAN-Partnerkonto"
+   notice in the gateway settings for current contact details).
+3. Go to WooCommerce → Settings → Payments → EUROPAN.
+4. Enable the gateway, enter your EUROPAN partner account email and API key.
+5. Optionally configure the customer bonus (percentage or fixed amount).
+6. Save. EUROPAN now appears as a payment option at checkout.
 
 == Frequently Asked Questions ==
 
@@ -100,6 +102,14 @@ service: https://europan.group/datenschutz
 
 == Changelog ==
 
+= 0.5.0 =
+* The EUROPAN API key is now entered directly in the gateway's own settings
+  screen (WooCommerce → Settings → Payments → EUROPAN), like every other
+  payment gateway plugin — previously it required editing wp-config.php,
+  which isn't practical for a self-service WordPress.org plugin. A
+  wp-config.php constant is still supported as an optional override for
+  advanced/managed deployments, but is no longer required.
+
 = 0.4.2 =
 * Renamed the plugin to "EUROPAN for WooCommerce" (English "for") — the
   previous German "für" isn't recognized by the WordPress.org Plugin
@@ -135,6 +145,11 @@ service: https://europan.group/datenschutz
   gateway, full-amount-only, with partner commission and refund handling.
 
 == Upgrade Notice ==
+
+= 0.5.0 =
+API key is now entered in the plugin's own settings screen instead of
+wp-config.php — please re-enter your key under WooCommerce → Settings →
+Payments → EUROPAN after updating.
 
 = 0.4.2 =
 Plugin renamed to "EUROPAN for WooCommerce" to comply with WordPress.org

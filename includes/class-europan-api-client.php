@@ -15,11 +15,34 @@ class Europan_API_Client {
 
     const BASE_URL = 'https://www.noble-limited.com';
 
-    /** @return string|null */
+    /**
+     * @return string|null
+     *
+     * Priority order:
+     * 1. The gateway's own "API-Key" settings field (WooCommerce → Settings →
+     *    Payments → EUROPAN) — this is the PRIMARY, self-service path: the shop
+     *    operator signs up for their own EUROPAN partner account at europan.group,
+     *    gets their own key, and enters it directly in the plugin's own settings
+     *    screen, exactly like every other WooCommerce payment gateway (Stripe,
+     *    PayPal, etc.) expects. This is what makes the plugin usable by anyone who
+     *    installs it from the WordPress.org directory without server access.
+     * 2. The EUROPAN_NOBLE_API_KEY wp-config.php constant, if defined — kept as an
+     *    OPTIONAL advanced override for operators who specifically want the key
+     *    out of the wp_options table (e.g. multi-site deployments managed by PAN21
+     *    itself). Only used as a fallback when the settings field is empty, never
+     *    the other way around, so a shop operator's own key always takes priority
+     *    over a leftover/shared constant.
+     */
     private static function api_key() {
-        // Filterable so a site-specific wp-config constant or secrets manager can supply it
-        // without ever putting the key in the WP options table.
-        $key = defined('EUROPAN_NOBLE_API_KEY') ? EUROPAN_NOBLE_API_KEY : '';
+        $gateway_settings = get_option('woocommerce_europan_settings', array());
+        $key = !empty($gateway_settings['api_key']) ? $gateway_settings['api_key'] : '';
+
+        if (empty($key) && defined('EUROPAN_NOBLE_API_KEY')) {
+            $key = EUROPAN_NOBLE_API_KEY;
+        }
+
+        // Filterable so a secrets manager or site-specific override can still
+        // supply/replace it, e.g. for staging environments.
         return apply_filters('europan_wc_noble_api_key', $key);
     }
 
