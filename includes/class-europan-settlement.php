@@ -14,10 +14,92 @@ if (!defined('ABSPATH')) exit;
 class Europan_WC_Settlement {
 
     public static function init() {
+        add_action('woocommerce_cart_calculate_fees', array(__CLASS__, 'apply_checkout_bonus_fee'), 20, 1);
         add_action('woocommerce_payment_complete', array(__CLASS__, 'handle_payment_complete'), 10, 1);
         add_action('woocommerce_order_status_cancelled', array(__CLASS__, 'handle_cancelled_or_refunded'), 10, 1);
         add_action('woocommerce_order_status_refunded', array(__CLASS__, 'handle_cancelled_or_refunded'), 10, 1);
         add_action('woocommerce_order_refunded', array(__CLASS__, 'handle_partial_refund'), 10, 2);
+    }
+
+    /**
+     * Applies the shop-configured EUROPAN bonus as a NEGATIVE cart fee (i.e. a
+     * discount line) whenever EUROPAN is the currently chosen payment method —
+     * for BOTH the classic shortcode checkout and the block-based Cart/Checkout,
+     * since both ultimately compute totals through the same WC_Cart::calculate_fees()
+     * pipeline and both render fee lines (positive or negative) in their totals
+     * table automatically. This is deliberately simpler than crediting a bonus back
+     * to the customer's balance AFTER payment (the previous approach): the customer
+     * now simply owes less, the order total itself reflects it, and everything
+     * downstream (validate_fields' balance check, the amount actually debited, the
+     * partner's net credit) automatically uses the already-discounted total with
+     * zero further code changes needed.
+     *
+     * KNOWN LIMITATION: the classic checkout updates WC()->session's
+     * 'chosen_payment_method' live via its own update_order_review AJAX call as
+     * soon as a payment method radio is selected, so the discount appears
+     * immediately. The block-based checkout does not guarantee the same live sync
+     * of the selected method into the session before the order is actually placed —
+     * so the discount is GUARANTEED correct at the moment the order is placed
+     * (that's the authoritative calculation this whole plugin relies on), but the
+     * live preview total shown while just browsing the block checkout may lag by
+     * one interaction. If that turns out to be visible in testing, it needs a small
+     * JS-side addition to blocks-checkout.js that pushes the payment method choice
+     * to the cart session as soon as it's selected — flagging this now rather than
+     * promising a behaviour I can't verify without the live block checkout.
+     */
+    public static function apply_checkout_bonus_fee($cart) {
+        if (is_admin() && !defined('DOING_AJAX')) {
+            return;
+        }
+        if (empty($cart) || !WC()->session) {
+            return;
+        }
+        if (WC()->session->get('chosen_payment_method') !== 'europan') {
+            return;
+        }
+
+        $gateway_settings = get_option('woocommerce_europan_settings', array());
+        if (empty($gateway_settings['bonus_enabled']) || $gateway_settings['bonus_enabled'] !== 'yes') {
+            return;
+        }
+
+        $bonus_type  = !empty($gateway_settings['bonus_type']) ? $gateway_settings['bonus_type'] : 'percent';
+        $bonus_value = isset($gateway_settings['bonus_value']) ? (float) $gateway_settings['bonus_value'] : 0;
+        if ($bonus_value <= 0) {
+            return;
+        }
+
+        // Base the bonus on line-item + shipping totals BEFORE this fee, never on a
+        // running total that might already include other fees — avoids compounding
+        // if another plugin also adds cart fees.
+        $base = (float) $cart->get_cart_contents_total() + (float) $cart->get_shipping_total();
+        if ($base <= 0) {
+            return;
+        }
+
+        $bonus_amount = ($bonus_type === 'fixed')
+            ? round($bonus_value, 2)
+            : round($base * ($bonus_value / 100), 2);
+
+        if ($bonus_amount <= 0) {
+            return;
+        }
+        // Never let the discount exceed the base it's calculated from.
+        if ($bonus_amount > $base) {
+            $bonus_amount = $base;
+        }
+
+        // Deliberately NOT using wc_price() in the label: WooCommerce's cart/checkout
+        // totals templates escape the fee name with esc_html(), so any HTML markup
+        // from wc_price() would show up as literal tags instead of a formatted price.
+        // The actual euro amount is shown automatically by WooCommerce next to the
+        // label (as the fee's own value column) — combined with the percentage in
+        // the label text below, that already covers "prozent- und betragsmäßig".
+        $label = ($bonus_type === 'fixed')
+            ? 'EUROPAN-Bonus'
+            : sprintf('EUROPAN-Bonus (%s%%)', rtrim(rtrim(number_format($bonus_value, 1, ',', '.'), '0'), ','));
+
+        $cart->add_fee($label, -$bonus_amount, false);
     }
 
     /**
@@ -87,76 +169,12 @@ class Europan_WC_Settlement {
             }
         }
 
-        self::maybe_credit_bonus($order, $email, $amount, $reference, $gateway_settings);
+        // Kein separater Bonus-Credit mehr hier: der Bonus wurde bereits VOR der
+        // Zahlung als Rabatt auf $amount eingerechnet (siehe apply_checkout_bonus_fee
+        // oben) — $amount ist also bereits der reduzierte Betrag. Eine zusätzliche
+        // Gutschrift hier würde den Bonus doppelt gewähren.
 
         $order->save();
-    }
-
-    /**
-     * Shop-operator-configured checkout bonus: credits a percentage or fixed amount
-     * of the (fully EUROPAN-paid) order total back to the CUSTOMER's own balance.
-     *
-     * This is intentionally simple compared to the original "Doppel-Wums" concept
-     * discussed for the canonical EUROPAN widget, which required supporting partial
-     * cart payment (some paid by EUROPAN, some by another method) to make the bonus
-     * meaningful. That complexity does not apply here: this gateway already requires
-     * the customer's EUROPAN balance to cover the ENTIRE order (see
-     * WC_Gateway_Europan::validate_fields — no partial use, ever), so "did they
-     * qualify" is not a separate condition to compute — every settled order via this
-     * gateway already qualifies by construction. The bonus is therefore just a
-     * second, independent credit, gated only by the shop's own on/off + amount
-     * settings, with no interaction with payment method mixing at all.
-     *
-     * Runs AFTER the partner credit (not before, not in parallel) so that a bonus
-     * failure never blocks or gets confused with partner reconciliation, and so the
-     * order notes read in a natural chronological story: debit → partner credit →
-     * bonus. Failure here is logged but does not roll back the order — the customer
-     * has already paid and received their goods; a failed bonus credit is a
-     * "manual top-up owed" situation, not a failed sale.
-     */
-    private static function maybe_credit_bonus($order, $email, $amount, $reference, $gateway_settings) {
-        if (empty($gateway_settings['bonus_enabled']) || $gateway_settings['bonus_enabled'] !== 'yes') {
-            return;
-        }
-
-        $bonus_type  = !empty($gateway_settings['bonus_type']) ? $gateway_settings['bonus_type'] : 'percent';
-        $bonus_value = isset($gateway_settings['bonus_value']) ? (float) $gateway_settings['bonus_value'] : 0;
-
-        if ($bonus_value <= 0) {
-            return;
-        }
-
-        if ($bonus_type === 'fixed') {
-            $bonus_amount = round($bonus_value, 2);
-        } else {
-            $bonus_amount = round($amount * ($bonus_value / 100), 2);
-        }
-
-        if ($bonus_amount <= 0) {
-            return;
-        }
-
-        // A fixed bonus larger than the order itself would make the bonus worth more
-        // than the purchase — cap it at the order amount rather than silently allow
-        // shop-config mistakes to hand out disproportionate credit.
-        if ($bonus_amount > $amount) {
-            $bonus_amount = $amount;
-        }
-
-        $bonus_reference = $reference . '-BONUS';
-
-        $bonus_desc = ($bonus_type === 'fixed')
-            ? sprintf('EUROPAN-Bonus Bestellung #%s (fester Betrag)', $order->get_order_number())
-            : sprintf('EUROPAN-Bonus Bestellung #%s (%.1f%% vom Bestellwert)', $order->get_order_number(), $bonus_value);
-
-        $bonus_credit = Europan_API_Client::credit_bonus($email, $bonus_amount, $bonus_desc, $bonus_reference);
-
-        if ($bonus_credit['ok']) {
-            $order->update_meta_data('_europan_wc_bonus_amount', $bonus_amount);
-            $order->add_order_note(sprintf('EUROPAN-Bonus gutgeschrieben: %s (Ref: %s). Neues Guthaben: %s.', wc_price($bonus_amount), $bonus_reference, $bonus_credit['new_balance']));
-        } else {
-            $order->add_order_note('⚠️ EUROPAN-Bonus-Gutschrift fehlgeschlagen: ' . $bonus_credit['error'] . ' — Kunde wurde bereits regulär belastet, Bonus-Nachbuchung manuell erforderlich.');
-        }
     }
 
     /**

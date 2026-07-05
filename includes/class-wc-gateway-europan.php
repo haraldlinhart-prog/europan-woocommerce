@@ -76,7 +76,7 @@ class WC_Gateway_Europan extends WC_Payment_Gateway {
             'bonus_title' => array(
                 'title'       => 'Kundenbonus',
                 'type'        => 'title',
-                'description' => 'Optionaler zusätzlicher Anreiz für Zahlungen per EUROPAN. Da diese Zahlungsart ohnehin immer den vollen Betrag verlangt (kein Teileinsatz), ist ein Bonus hier — anders als beim ursprünglichen "Doppel-Wums"-Konzept mit Teilzahlung — ohne zusätzliche Komplexität möglich: der Kunde bekommt nach erfolgreicher Zahlung einfach einen Teil seines Guthabens als EUROPAN zurückgutgeschrieben.',
+                'description' => 'Optionaler zusätzlicher Anreiz für Zahlungen per EUROPAN. Der Bonus wird als eigene Rabatt-Zeile direkt im Warenkorb/Checkout vom Rechnungsbetrag abgezogen, sobald der Kunde EUROPAN als Zahlungsart wählt — er erscheint dort automatisch prozent- und betragsmäßig in der Bestellübersicht. Da diese Zahlungsart ohnehin immer den vollen (bereits reduzierten) Betrag verlangt, ist das — anders als beim ursprünglichen "Doppel-Wums"-Konzept mit Teilzahlung — ohne zusätzliche Komplexität möglich.',
             ),
             'bonus_enabled' => array(
                 'title'   => 'Bonus aktivieren',
@@ -215,7 +215,7 @@ class WC_Gateway_Europan extends WC_Payment_Gateway {
         }
 
         return sprintf(
-            '<strong>%s</strong> auf jede vollständig per EUROPAN bezahlte Bestellung — wird Ihnen nach erfolgreicher Zahlung automatisch als zusätzliches Guthaben gutgeschrieben.',
+            '<strong>%s</strong> auf jede vollständig per EUROPAN bezahlte Bestellung — wird bereits hier vom Rechnungsbetrag abgezogen, sobald EUROPAN als Zahlungsart ausgewählt ist.',
             esc_html($desc)
         );
     }
