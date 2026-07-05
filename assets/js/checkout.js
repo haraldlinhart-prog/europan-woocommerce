@@ -8,8 +8,16 @@
 (function ($) {
     'use strict';
 
-    function fmtEuro(value) {
-        return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(value);
+    /**
+     * EUROPAN-denominierte Beträge tragen das EUROPAN-Zeichen )( statt € — exakt
+     * dieselbe Formatierung wie im kanonischen EUROPAN-Widget
+     * (europan-widget/vanilla/summary-logic.js, single-item-logic.js), damit das
+     * Zahlungsart-Panel visuell zur restlichen EUROPAN-Familie passt und nicht den
+     * Eindruck erweckt, hier ginge es um eine zweite, unabhängige Euro-Zahlung.
+     */
+    function fmtEP(value) {
+        var n = Number(value) || 0;
+        return ')( ' + (n % 1 === 0 ? n.toFixed(0) : n.toFixed(2).replace('.', ','));
     }
 
     function setStatus(state, text) {
@@ -58,14 +66,14 @@
 
             if (data.sufficient) {
                 $result.addClass('europan-wc-result--ok').html(
-                    'Guthaben: <strong>' + fmtEuro(data.balance) + '</strong> — ausreichend für diese Bestellung (' + fmtEuro(data.cart_total) + ').'
+                    'Guthaben: <strong>' + fmtEP(data.balance) + '</strong> — ausreichend für diese Bestellung (' + fmtEP(data.cart_total) + ').'
                 );
                 setStatus('ok', 'Aktiv');
                 disablePlaceOrder(false);
             } else {
                 $result.addClass('europan-wc-result--error').html(
-                    'Ihr Guthaben (' + fmtEuro(data.balance) + ') reicht nicht für den vollen Betrag (' + fmtEuro(data.cart_total) + '). ' +
-                    'Es fehlen <strong>' + fmtEuro(data.shortfall) + '</strong>. ' +
+                    'Ihr Guthaben (' + fmtEP(data.balance) + ') reicht nicht für den vollen Betrag (' + fmtEP(data.cart_total) + '). ' +
+                    'Es fehlen <strong>' + fmtEP(data.shortfall) + '</strong>. ' +
                     '<a href="https://europan.group/buy" target="_blank" rel="noopener">Jetzt aufladen →</a>'
                 );
                 setStatus('fail', 'Guthaben unzureichend');

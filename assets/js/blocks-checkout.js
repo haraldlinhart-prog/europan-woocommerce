@@ -22,8 +22,9 @@
     var useEffect = window.wp.element.useEffect;
     var RawHTML = window.wp.element.RawHTML;
 
-    function fmtEuro(value) {
-        return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(value);
+    function fmtEP(value) {
+        var n = Number(value) || 0;
+        return ')( ' + (n % 1 === 0 ? n.toFixed(0) : n.toFixed(2).replace('.', ','));
     }
 
     /**
@@ -99,13 +100,13 @@
                 if (data.sufficient) {
                     setResult({
                         ok: true,
-                        message: 'Guthaben: ' + fmtEuro(data.balance) + ' — ausreichend für diese Bestellung (' + fmtEuro(data.cart_total) + ').',
+                        message: 'Guthaben: ' + fmtEP(data.balance) + ' — ausreichend für diese Bestellung (' + fmtEP(data.cart_total) + ').',
                     });
                 } else {
                     setResult({
                         error: true,
-                        message: 'Ihr Guthaben (' + fmtEuro(data.balance) + ') reicht nicht für den vollen Betrag (' +
-                            fmtEuro(data.cart_total) + '). Es fehlen ' + fmtEuro(data.shortfall) + '.',
+                        message: 'Ihr Guthaben (' + fmtEP(data.balance) + ') reicht nicht für den vollen Betrag (' +
+                            fmtEP(data.cart_total) + '). Es fehlen ' + fmtEP(data.shortfall) + '.',
                     });
                     setToken('');
                 }
