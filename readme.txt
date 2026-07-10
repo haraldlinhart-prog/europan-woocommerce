@@ -4,7 +4,7 @@ Tags: woocommerce, payment gateway, prepaid, ecommerce, currency
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.6.3
+Stable tag: 0.6.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -91,21 +91,29 @@ to receive credits for completed orders.
 Yes, it is fully optional and disabled by default. Shop owners choose whether
 to offer it at all, and whether it's a percentage or a fixed amount.
 
-== Privacy ==
+== External services ==
+
+This plugin connects to **europan.direct**, an API operated by PAN21.COM
+Corporate Consultants Ltd on behalf of Noble Private Capital Ltd, to verify
+EUROPAN balances and settle payments on behalf of the shop. It is needed
+because EUROPAN balance verification and settlement can only happen through
+this partner API — this plugin never contacts EUROPAN's core account
+infrastructure directly.
 
 When a customer checks their EUROPAN balance or completes a payment, this
-plugin sends the following data to europan.direct (operated by PAN21.COM
-Corporate Consultants Ltd on behalf of Noble Private Capital Ltd), using the
-shop's own partner API key:
+plugin sends the following data to europan.direct, using the shop's own
+partner API key:
 
 * The email address and PIN entered by the customer (used only to verify the
   balance — never stored by this plugin beyond the current checkout session).
 * The order amount and a reference derived from the WooCommerce order number.
 
-No other customer or site data is transmitted, and the plugin itself never
-contacts EUROPAN's core account infrastructure directly — only europan.direct,
-which is also where the shop owner registers once, manually, for a partner
-account and API key.
+This happens every time a customer selects "Pay with EUROPAN" at checkout
+and submits their credentials. No other customer or site data is transmitted.
+
+This service is provided by PAN21.COM Corporate Consultants Ltd:
+[Terms of Service](https://www.europan.direct/agb.html),
+[Privacy Policy](https://www.europan.direct/datenschutz.html).
 
 == Screenshots ==
 
@@ -114,9 +122,15 @@ account and API key.
 
 == Changelog ==
 
+= 0.6.4 =
+* Added a dedicated "External services" section to readme.txt disclosing
+  data sent to europan.direct, with links to its Terms of Service and
+  Privacy Policy (both newly published), per WordPress.org review feedback.
+* Fixed "Tested up to" to use Major.Minor format only (7.0, not 7.0.1).
+
 = 0.6.3 =
 * Updated compatibility metadata ahead of WordPress.org submission: tested up
-  to WordPress 7.0 and WooCommerce 10.9. No functional changes.
+  to WordPress 7.0.1 and WooCommerce 10.9. No functional changes.
 
 = 0.6.2 =
 * Fixed two Plugin Check nonce-verification warnings that were reintroduced
