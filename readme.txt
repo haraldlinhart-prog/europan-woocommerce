@@ -2,7 +2,7 @@
 Contributors: europan
 Tags: woocommerce, payment gateway, prepaid, ecommerce, currency
 Requires at least: 6.4
-Tested up to: 7.0.1
+Tested up to: 7.0
 Requires PHP: 7.4
 Stable tag: 0.6.3
 License: GPLv2 or later
@@ -116,7 +116,7 @@ account and API key.
 
 = 0.6.3 =
 * Updated compatibility metadata ahead of WordPress.org submission: tested up
-  to WordPress 7.0.1 and WooCommerce 10.9. No functional changes.
+  to WordPress 7.0 and WooCommerce 10.9. No functional changes.
 
 = 0.6.2 =
 * Fixed two Plugin Check nonce-verification warnings that were reintroduced
